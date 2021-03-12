@@ -1,0 +1,12 @@
+.venv
+.history
+.vscode
+__pycache__
+.pytest_cache
+build
+dist
+*.spec
+*.log
+*.xls
+*.xlsx
+*.txt
