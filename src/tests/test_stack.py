@@ -8,8 +8,7 @@
 @Contact :   tongtan@gmail.com
 '''
 
-from src.commons.stack import Stack
-from src.commons.commons import par_checker
+from src.commons.stack import Stack, par_checker
 
 
 class TestStack:

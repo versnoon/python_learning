@@ -9,6 +9,39 @@
 '''
 
 
+def match(open, close):
+    opens = "([{"
+    closes = ")]}"
+    return opens.index(open) == closes.index(close)
+
+
+def par_checker(symbol_str):
+    """
+    匹配符号
+    """
+    s = Stack()
+    blanced = True
+    index = 0
+
+    while index < len(symbol_str) and blanced:
+        symble = symbol_str[index]
+        if symble in '([{':
+            s.push(symble)
+        else:
+            if s.is_empty():
+                blanced = False
+            else:
+                top = s.pop()
+                if not match(top, symble):
+                    blanced = False
+        index = index + 1
+
+    if blanced and s.is_empty():
+        return True
+    else:
+        return False
+
+
 class Stack:
 
     def __init__(self):
