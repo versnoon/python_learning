@@ -42,6 +42,21 @@ def par_checker(symbol_str):
         return False
 
 
+def divide_by_base(dec_num, base):
+    s = Stack()
+    digits = "0123456789ABCDEF"
+    while dec_num > 0:
+        rem = dec_num % base
+        s.push(rem)
+        dec_num = dec_num // base
+
+    bin_str = ""
+    while not s.is_empty():
+        bin_str = bin_str + digits[s.pop()]
+
+    return bin_str
+
+
 class Stack:
 
     def __init__(self):

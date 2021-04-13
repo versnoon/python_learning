@@ -8,7 +8,7 @@
 @Contact :   tongtan@gmail.com
 '''
 
-from src.commons.stack import Stack, par_checker
+from src.commons.stack import Stack, par_checker, divide_by_base
 
 
 class TestStack:
@@ -30,3 +30,11 @@ class TestStack:
         assert not par_checker('(]')
         assert par_checker('((((([{{{{}}}}])))))')
         assert not par_checker('((((([{{{{}}}}]))))]')
+
+    def test_divide_by_base(self):
+
+        assert "1" == divide_by_base(1, 2)
+        assert "1100100" == divide_by_base(100, 2)
+        assert "144" == divide_by_base(100, 8)
+        assert "64" == divide_by_base(100, 16)
+        assert "F" == divide_by_base(15, 16)
