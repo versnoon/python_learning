@@ -8,6 +8,8 @@
 @Contact :   tongtan@gmail.com
 '''
 
+import string
+
 
 def match(open, close):
     opens = "([{"
@@ -43,6 +45,9 @@ def par_checker(symbol_str):
 
 
 def divide_by_base(dec_num, base):
+    """
+    十进制数转换
+    """
     s = Stack()
     digits = "0123456789ABCDEF"
     while dec_num > 0:
@@ -55,6 +60,41 @@ def divide_by_base(dec_num, base):
         bin_str = bin_str + digits[s.pop()]
 
     return bin_str
+
+
+def infix_to_postfix(infix_expr):
+    """
+    中序转后续表达式
+    """
+    prec = {}
+    prec["*"] = 3
+    prec["/"] = 3
+    prec["+"] = 2
+    prec["-"] = 2
+    prec["("] = 1
+
+    s = Stack()
+    postfix_list = []
+
+    token_list = infix_expr.split()
+
+    for token in token_list:
+        if token in string.ascii_uppercase:
+            postfix_list.append(token)
+        elif token == "(":
+            s.push(token)
+        elif token == ")":
+            top = s.pop()
+            while top != "(":
+                postfix_list.append(top)
+                top = s.pop()
+        else:
+            while (not s.is_empty()) and (prec[s.peek()] >= prec[token]):
+                postfix_list.append(s.pop())
+            s.push(token)
+    while not s.is_empty():
+        postfix_list.append(s.pop())
+    return "".join(postfix_list)
 
 
 class Stack:
