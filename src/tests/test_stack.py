@@ -8,7 +8,7 @@
 @Contact :   tongtan@gmail.com
 '''
 
-from src.commons.stack import Stack, par_checker, divide_by_base, infix_to_postfix
+from src.commons.stack import Stack, par_checker, divide_by_base, infix_to_postfix, postfix_eval
 
 
 class TestStack:
@@ -44,3 +44,7 @@ class TestStack:
         assert "AB+CD+*" == infix_to_postfix("( A + B ) * ( C + D )")
         assert "AB+C*" == infix_to_postfix("( A + B ) * C")
         assert "ABC*+" == infix_to_postfix("A + B * C")
+
+    def test_postfix_eval(self):
+
+        assert 3 == postfix_eval("7 8 + 3 2 + /")

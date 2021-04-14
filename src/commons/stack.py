@@ -97,6 +97,33 @@ def infix_to_postfix(infix_expr):
     return "".join(postfix_list)
 
 
+def postfix_eval(postfix_expr):
+    s = Stack()
+
+    token_list = postfix_expr.split()
+
+    for token in token_list:
+        if token in "0123456789":
+            s.push(int(token))
+        else:
+            ope_2 = s.pop()
+            ope_1 = s.pop()
+            res = do_math(token, ope_1, ope_2)
+            s.push(res)
+    return s.pop()
+
+
+def do_math(op, ope_1, ope_2):
+    if op == "*":
+        return ope_1 * ope_2
+    if op == "/":
+        return ope_1 / ope_2
+    if op == "+":
+        return ope_1 + ope_2
+    if op == "-":
+        return ope_1 + ope_2
+
+
 class Stack:
 
     def __init__(self):
