@@ -19,4 +19,12 @@
 ## 其它
 
 1. 更新pip命令 ``python -m pip install --upgrade pip`` 
+2. 指定pip镜像 ``pip install -i  http://mirrors.aliyun.com/pypi/simple/ opencv-python --trusted-host mirrors.aliyun.com``
+3. 安装指定版本的selenum ``pip install selenium==3.141.0``
+
+## pandas
+1. 安装pandas
+2. 更新pandas
+
+
    
