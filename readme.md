@@ -23,8 +23,7 @@
 3. 安装指定版本的selenum ``pip install selenium==3.141.0``
 
 ## pandas
-1. 安装pandas
-2. 更新pandas
+1. 安装及更新pandas  ``pip install -U pandas``
 
 
    
