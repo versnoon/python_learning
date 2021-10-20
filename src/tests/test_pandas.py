@@ -14,10 +14,18 @@ import pytest
 import numpy as np
 import pandas as pd
 
+import src.pandas.read_xls as prx
+
 
 class TestPandas:
 
     filename = r'D:\薪酬审核文件夹\202103\汇总数据\202103_sh002.xls'
+
+    path_prefix = r'D:\薪酬审核文件夹'
+    period_str = '202110'
+    salary_files_folder_path_name = '工资奖金数据'
+    gz_file_name_prefix = '工资信息'
+    jj_file_name_prefix = '奖金信息'
 
     def test_series(self):
         s = pd.Series([1, 3, 5, np.nan, 6, 8], name="something")
@@ -83,3 +91,12 @@ class TestPandas:
         dw_grp_sum = dw_grp.sum()
         assert dw_grp_sum.loc["保卫部（武装部）", "岗位工资"] == 1283880
         assert dw_grp_sum.loc["教培中心", "保留工资"] == 62672
+
+    def test_merge_excel_file_to_df(self):
+        '''
+        测试从多个excel文件合并数据
+        '''
+        with pytest.raises(FileNotFoundError):
+            assert prx.make_df_from_excel('t', skiperror=False)
+        assert prx.make_df_from_excel(
+            '工资信息-股份.xls') == prx.get_file_path('工资信息-股份.xls')
