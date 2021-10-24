@@ -94,9 +94,22 @@ class TestPandas:
 
     def test_merge_excel_file_to_df(self):
         '''
-        测试从多个excel文件合并数据
+        测试从单个excel文件合并数据
         '''
-        with pytest.raises(FileNotFoundError):
-            assert prx.make_df_from_excel('t', skiperror=False)
-        assert prx.make_df_from_excel(
-            '工资信息-股份.xls') == prx.get_file_path('工资信息-股份.xls')
+        df = prx.make_df_from_excel_files('202111')
+
+        assert '员工通行证' in df.columns
+        assert '应发' in df.columns
+
+    def test_file_name_prefix_valitor(self):
+        assert prx.file_name_prefix_validator("工资信息-股份.xlsx", "工资信息") is True
+        assert prx.file_name_prefix_validator("~工资信息-股份.xlsx", "工资信息") is False
+
+    def test_make_df_from_excel_files(self):
+        df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
+                                             '员工通行证', '员工姓名', '机构'])
+        df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
+        df_jj['奖金信息-应发'] == 'M73677'
+        df_gz = prx.make_df_from_excel_files('202111', file_name_prefix='工资信息')
+        df_gz = df_gz.loc[df_gz['工资信息-员工通行证'] == 'M70359']
+        df_gz['工资信息-应发'] == 'M73677'
