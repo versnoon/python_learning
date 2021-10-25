@@ -3,7 +3,7 @@
 '''
 @File    :   test_pandas.py
 @Time    :   2021/03/12 14:23:58
-@Author  :   Tong tan 
+@Author  :   Tong tan
 @Version :   1.0
 @Contact :   tongtan@gmail.com
 '''
@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 import src.pandas.read_xls as prx
+import src.pandas.run as r
 
 
 class TestPandas:
@@ -133,3 +134,19 @@ class TestPandas:
                                                         == r'马钢（集团）控股有限公司(总部)\资产经营公司\工程管理部')]
         assert df_2['奖金信息-员工通行证'].values[0] == 'M73677'
         assert df_2['奖金信息-应发'].values[0] == 12900
+
+    def test_load_period_excel_file(self):
+        df = prx.make_df_from_excel_files(
+            file_sub_path='', file_name_prefix='当前审核日期')
+        assert df["当前审核日期-年"].values[0] == 2021
+        assert df["当前审核日期-月"].values[0] == 10
+        assert '202001' == r.period_str(2020, 1)
+        assert '202111' == r.period_str(2021, 11)
+
+    def test_load_depart_excel_file(self):
+        df = prx.make_df_from_excel_files(
+            period='202111', file_sub_path='', file_name_prefix='审核机构信息')
+        assert prx.get_df_cell_value(df, '审核机构信息', '序号') == 1
+        assert prx.get_df_cell_value(df, '审核机构信息', '序号', 1) == 2
+        assert prx.get_df_cell_value(df, '审核机构信息', '工资范围') == '01'
+        assert prx.get_df_cell_value(df, '审核机构信息', 'SAP单位名称') == '集团机关'

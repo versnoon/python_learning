@@ -13,7 +13,7 @@ rows_per_one_read = 3000
 
 
 def make_df_from_excel_files(
-    period,
+    period='',
     file_sub_path='工资奖金数据',
     file_name_prefix='工资信息',
     file_exts=['.xls', '.xlsx'],
@@ -35,8 +35,10 @@ def make_df_from_excel_files(
     return df
 
 
-def get_file_dir(period, file_sub_path=''):
-    p = os.path.join(file_root_path, period)
+def get_file_dir(period='', file_sub_path=''):
+    p = file_root_path
+    if period:
+        p = os.path.join(p, period)
     if file_sub_path:
         p = os.path.join(p, file_sub_path)
     return p
@@ -82,3 +84,10 @@ def get_file_ext(file_path):
     if len(ext) == 0:
         return ""
     return ext[-1].lower()
+
+
+def get_df_cell_value(df, perfix, name, row=0):
+    key = name
+    if perfix:
+        key = f'{perfix}-{name}'
+    return df[key].values[row]
