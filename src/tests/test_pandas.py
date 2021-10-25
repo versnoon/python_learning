@@ -59,6 +59,8 @@ class TestPandas:
             }
         )
         df["OldName"] = df["Name"]
+        assert df[df['ChineseName'] ==
+                  '童坦']['Name'].values[0] == 'tongtan'
         assert "liqin" == df["Name"][0]
         assert "liqin" == df["OldName"][0]
         assert len(df.columns) == 3
@@ -98,18 +100,36 @@ class TestPandas:
         '''
         df = prx.make_df_from_excel_files('202111')
 
-        assert '员工通行证' in df.columns
-        assert '应发' in df.columns
+        assert '工资信息-员工通行证' in df.columns
+        assert '工资信息-应发' in df.columns
 
     def test_file_name_prefix_valitor(self):
         assert prx.file_name_prefix_validator("工资信息-股份.xlsx", "工资信息") is True
         assert prx.file_name_prefix_validator("~工资信息-股份.xlsx", "工资信息") is False
 
     def test_make_df_from_excel_files(self):
-        df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
-                                             '员工通行证', '员工姓名', '机构'])
-        df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
-        df_jj['奖金信息-应发'] == 'M73677'
+        # df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
+        #                                      '员工通行证', '员工姓名', '机构'])
+        # df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
+        # assert df_jj['奖金信息-员工通行证'] == 'M73677'
         df_gz = prx.make_df_from_excel_files('202111', file_name_prefix='工资信息')
         df_gz = df_gz.loc[df_gz['工资信息-员工通行证'] == 'M70359']
-        df_gz['工资信息-应发'] == 'M73677'
+        type_str = type(df_gz)
+        assert df_gz['工资信息-员工通行证'].values[0] == 'M70359'
+
+    def test_df_merge(self):
+        df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
+                                             '员工通行证', '员工姓名', '机构'])
+        df_gz = prx.make_df_from_excel_files('202111', file_name_prefix='工资信息')
+
+        df = pd.merge(df_gz, df_jj, left_on=[
+                      '工资信息-员工通行证', '工资信息-机构'], right_on=['奖金信息-员工通行证', '奖金信息-机构'], how='outer')
+        df_1 = df.loc[(df['工资信息-员工通行证'] == 'M70359') & (df['工资信息-机构']
+                                                        == r'马钢（集团）控股有限公司(总部)\资产经营公司\综合管理部')]
+        assert df_1['工资信息-员工通行证'].values[0] == 'M70359'
+        assert df_1['奖金信息-员工通行证'].values[0] == 'M70359'
+        assert df_1['奖金信息-应发'].values[0] > 0
+        df_2 = df.loc[(df['奖金信息-员工通行证'] == 'M73677') & (df['奖金信息-机构']
+                                                        == r'马钢（集团）控股有限公司(总部)\资产经营公司\工程管理部')]
+        assert df_2['奖金信息-员工通行证'].values[0] == 'M73677'
+        assert df_2['奖金信息-应发'].values[0] == 12900
