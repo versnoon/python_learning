@@ -99,7 +99,8 @@ class TestPandas:
         '''
         测试从单个excel文件合并数据
         '''
-        df = prx.make_df_from_excel_files('202111')
+        df = prx.make_df_from_excel_files(
+            period='202111', file_sub_path='工资奖金数据', file_name_prefix='工资信息')
 
         assert '工资信息-员工通行证' in df.columns
         assert '工资信息-应发' in df.columns
@@ -109,19 +110,20 @@ class TestPandas:
         assert prx.file_name_prefix_validator("~工资信息-股份.xlsx", "工资信息") is False
 
     def test_make_df_from_excel_files(self):
-        # df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
-        #                                      '员工通行证', '员工姓名', '机构'])
-        # df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
-        # assert df_jj['奖金信息-员工通行证'] == 'M73677'
-        df_gz = prx.make_df_from_excel_files('202111', file_name_prefix='工资信息')
+        df_jj = prx.make_df_from_excel_files(period='202111', file_sub_path='工资奖金数据', file_name_prefix='奖金信息', group_by=[
+            '员工通行证', '员工姓名', '机构'])
+        df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
+        assert df_jj['奖金信息-员工通行证'].values[0] == 'M70359'
+        df_gz = prx.make_df_from_excel_files(
+            period='202111', file_sub_path='工资奖金数据', file_name_prefix='工资信息')
         df_gz = df_gz.loc[df_gz['工资信息-员工通行证'] == 'M70359']
-        type_str = type(df_gz)
         assert df_gz['工资信息-员工通行证'].values[0] == 'M70359'
 
     def test_df_merge(self):
-        df_jj = prx.make_df_from_excel_files('202111', file_name_prefix='奖金信息', group_by=[
+        df_jj = prx.make_df_from_excel_files(period='202111', file_sub_path='工资奖金数据', file_name_prefix='奖金信息', group_by=[
                                              '员工通行证', '员工姓名', '机构'])
-        df_gz = prx.make_df_from_excel_files('202111', file_name_prefix='工资信息')
+        df_gz = prx.make_df_from_excel_files(
+            period='202111', file_sub_path='工资奖金数据', file_name_prefix='工资信息')
 
         df = pd.merge(df_gz, df_jj, left_on=[
                       '工资信息-员工通行证', '工资信息-机构'], right_on=['奖金信息-员工通行证', '奖金信息-机构'], how='outer')
@@ -136,8 +138,7 @@ class TestPandas:
         assert df_2['奖金信息-应发'].values[0] == 12900
 
     def test_load_period_excel_file(self):
-        df = prx.make_df_from_excel_files(
-            file_sub_path='', file_name_prefix='当前审核日期')
+        df = prx.make_df_from_excel_files(file_name_prefix='当前审核日期')
         assert df["当前审核日期-年"].values[0] == 2021
         assert df["当前审核日期-月"].values[0] == 10
         assert '202001' == r.period_str(2020, 1)

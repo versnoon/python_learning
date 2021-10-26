@@ -6,21 +6,22 @@ import pandas as pd
 
 
 # 存放数据文件的根目录
-file_root_path = r'D:\薪酬审核文件夹'
+root_dir = r'D:\薪酬审核文件夹'
 
 # 一次读取多少条记录
 rows_per_one_read = 3000
 
 
 def make_df_from_excel_files(
+    file_root_path=root_dir,
     period='',
-    file_sub_path='工资奖金数据',
-    file_name_prefix='工资信息',
+    file_sub_path='',
+    file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
     group_by=[]
 ):
     chunks = []
-    file_dir = get_file_dir(period, file_sub_path)
+    file_dir = get_file_dir(period, file_sub_path, file_root_path)
     for file_name in os.listdir(file_dir):
         if file_name_validate(file_name, file_name_prefix, file_exts):
             file_df = make_df_from_excel(get_file_path(
@@ -35,7 +36,7 @@ def make_df_from_excel_files(
     return df
 
 
-def get_file_dir(period='', file_sub_path=''):
+def get_file_dir(period='', file_sub_path='', file_root_path=root_dir):
     p = file_root_path
     if period:
         p = os.path.join(p, period)
