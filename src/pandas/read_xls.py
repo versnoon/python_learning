@@ -5,49 +5,52 @@ import numpy as np
 import pandas as pd
 
 
-# 存放数据文件的根目录
-root_dir = r'D:\薪酬审核文件夹'
-
 # 一次读取多少条记录
 rows_per_one_read = 3000
 
 
 def make_df_from_excel_files(
-    file_root_path=root_dir,
+    file_root_path,
     period='',
-    file_sub_path='',
+    file_sub_path=[],
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
     group_by=[],
 ):
     chunks = []
     err_paths = []
-    file_dir = get_file_dir(period, file_sub_path, file_root_path)
-    for file_name in os.listdir(file_dir):
-        if file_name_validate(file_name, file_name_prefix, file_exts):
-            file_path = get_file_path(
-                file_dir, file_name)
-            file_df, err_path = make_df_from_excel(file_path, file_name_prefix)
-            if not err_path and not file_df.empty:
-                chunks.append(file_df)
-            else:
-                err_paths.append(err_path)
+    file_dir = get_file_dir(file_root_path, period, file_sub_path)
     df = pd.DataFrame()
-    if len(chunks) > 0:
-        df = pd.concat(chunks, ignore_index=True)
-    if len(group_by) > 0:
-        group_by_keys = [f'{file_name_prefix}-{col}' for col in group_by]
-        df = df.groupby(group_by_keys, as_index=False)
-        df = df.aggregate(np.sum)
+    if os.path.exists(file_dir):
+        for file_name in os.listdir(file_dir):
+            if file_name_validate(file_name, file_name_prefix, file_exts):
+                file_path = get_file_path(
+                    file_dir, file_name)
+                file_df, err_path = make_df_from_excel(
+                    file_path, file_name_prefix)
+                if not err_path and not file_df.empty:
+                    chunks.append(file_df)
+                else:
+                    err_paths.append(err_path)
+        if len(chunks) > 0:
+            df = pd.concat(chunks, ignore_index=True)
+        if len(group_by) > 0:
+            group_by_keys = [f'{file_name_prefix}-{col}' for col in group_by]
+            df = df.groupby(group_by_keys, as_index=False)
+            df = df.aggregate(np.sum)
+    else:
+        err_paths.append(file_dir)
+
     return df, err_paths
 
 
-def get_file_dir(period='', file_sub_path='', file_root_path=root_dir):
+def get_file_dir(file_root_path, period='', file_sub_path=[]):
     p = file_root_path
     if period:
         p = os.path.join(p, period)
-    if file_sub_path:
-        p = os.path.join(p, file_sub_path)
+    if len(file_sub_path) > 0:
+        for s_p in file_sub_path:
+            p = os.path.join(p, s_p)
     return p
 
 

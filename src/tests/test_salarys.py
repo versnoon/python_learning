@@ -12,8 +12,9 @@
 import src.salarys.period as period_op
 import src.salarys.depart as depart_op
 import src.salarys.utils as utils
-import src.pandas.read_xls as prx
 import src.salarys.salary_infos as s_infos
+
+period = '202110'
 
 
 class TestSalarys:
@@ -27,7 +28,7 @@ class TestSalarys:
         assert p.month == 11
 
     def test_departs(self):
-        ds = depart_op.Departs(period='202111')
+        ds = depart_op.Departs(period=period)
         assert ds.df is not None
         assert len(ds.departs) > 0
         assert ds.departs[0].name == '集团机关'
@@ -37,13 +38,27 @@ class TestSalarys:
         assert ds.departs[0].display_name == '集团机关'
 
     def test_salary_infos(self):
-        gzs = s_infos.SalaryGzs('202111')
-        assert gzs.df is not None
+        gzs = s_infos.SalaryGzs(period)
+        assert ~gzs.df.empty
         assert gzs.df[f'{gzs.name}-员工通行证'].any()
 
-        jjs = s_infos.SalaryJjs('202111')
+        jjs = s_infos.SalaryJjs(period)
         assert ~jjs.df.empty
         assert jjs.df[f'{jjs.name}-员工通行证'].any()
 
-        banks = s_infos.SalaryBanks('202111',)
-        assert banks.df.empty
+        banks = s_infos.SalaryBanks(period)
+        assert ~gzs.df.empty
+        assert banks.df[f'{banks.name}-员工通行证'].any()
+
+        jobs = s_infos.SalaryPersonJobs(period)
+        assert ~jobs.df.empty
+        assert jobs.df[f'{jobs.name}-通行证'].any()
+
+        persons = s_infos.SalaryPersons(period)
+        assert ~persons.df.empty
+        assert persons.df[f'{persons.name}-通行证'].any()
+
+    def test_salary_infos_taxs(self):
+        ds = depart_op.Departs(period=period)
+        taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
+        assert len(taxs.dfs) == 2

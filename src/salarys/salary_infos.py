@@ -20,7 +20,7 @@ class SalaryBaseInfo:
         if not self.period:
             raise ValueError(f'请指定期间信息')
         self.name = ''
-        self.file_sub_dir = ''
+        self.file_sub_dir = []
         self.df = None
         self.skip_err = True
         self.err_paths = []
@@ -28,7 +28,7 @@ class SalaryBaseInfo:
     def get_infos(self):
         if not self.df:
             self.df, self.err_paths = prx.make_df_from_excel_files(
-                period=self.period, file_root_path=utils.root_dir, file_sub_path=self.file_sub_dir, file_name_prefix=self.name)
+                period=self.period, file_root_path=utils.root_dir_(), file_sub_path=self.file_sub_dir, file_name_prefix=self.name)
             if not self.skip_err:
                 err_file_msg = '|'.join(self.err_paths)
                 if err_file_msg:
@@ -46,7 +46,7 @@ class SalaryGzs(SalaryBaseInfo):
     def __init__(self, period) -> None:
         super().__init__(period)
         self.name = '工资信息'
-        self.file_sub_dir = utils.gz_jj_dir
+        self.file_sub_dir = [utils.gz_jj_dir]
         super().get_infos()
 
 
@@ -58,7 +58,7 @@ class SalaryJjs(SalaryBaseInfo):
     def __init__(self, period) -> None:
         super().__init__(period)
         self.name = '奖金信息'
-        self.file_sub_dir = utils.gz_jj_dir
+        self.file_sub_dir = [utils.gz_jj_dir]
         super().get_infos()
 
 
@@ -100,18 +100,23 @@ class SalaryTaxs(SalaryBaseInfo):
     发薪人员税务信息
     """
 
-    def __init__(self, period, tex_depart_name) -> None:
+    def __init__(self, period, tax_departs=[]) -> None:
         super().__init__(period)
-        self.tax_depart_name = tex_depart_name
+        self.tax_departs = tax_departs
         self.name = self.tax_name()
-        self.file_sub_dir = self.tex_info_dir()
-        super().get_infos()
-
-    def tex_info_dir(self):
-        return os.path.join(utils.tax_dir, self.tex_depart_name)
+        self.dfs = dict()
+        self.get_taxs_infos()
 
     def tax_name(self):
         return f'{self.period}_税款计算_工资薪金所得'
+
+    def get_taxs_infos(self):
+        if not self.df:
+            for tax_depart in self.tax_departs:
+                df, _ = prx.make_df_from_excel_files(
+                    period=self.period, file_root_path=utils.root_dir_(), file_sub_path=[utils.tax_dir, tax_depart], file_name_prefix=self.name)
+                if not df.empty:
+                    self.dfs[tax_depart] = df
 
 
 class SalaryInfos:

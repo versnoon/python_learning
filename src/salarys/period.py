@@ -31,7 +31,7 @@ class Period:
     def get_period(self):
         if not self.df:
             self.df, self.err_paths = prx.make_df_from_excel_files(
-                file_root_path=utils.root_dir, file_name_prefix=self.name)
+                file_root_path=utils.root_dir_(), file_name_prefix=self.name)
         if not self.df.empty:
             self.year = prx.get_df_cell_value(self.df, '当前审核日期', '年')
             self.month = prx.get_df_cell_value(self.df, '当前审核日期', '月')

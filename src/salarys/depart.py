@@ -42,7 +42,7 @@ class Departs:
             raise ValueError(f'请指定期间信息')
         if not self.df:
             self.df, self.err_paths = prx.make_df_from_excel_files(
-                period=self.period, file_root_path=utils.root_dir, file_name_prefix=self.name)
+                period=self.period, file_root_path=utils.root_dir_(), file_name_prefix=self.name)
         if not self.df.empty:
             self.departs = self.to_depart_infos(self.df)
 
@@ -62,3 +62,6 @@ class Departs:
                     lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
         d.gjj_dep_name = s[7]  # 公积金类型
         return d
+
+    def tax_departs(self):
+        return self.df[f"{self.name}-税务机构"].drop_duplicates().to_list()
