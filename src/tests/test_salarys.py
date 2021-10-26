@@ -30,7 +30,7 @@ class TestSalarys:
         ds.get_departs()
         assert ds.df is not None
         assert len(ds.departs) > 0
-        assert ds.departs[0].name == '马钢（集团）控股有限公司(总部)'
+        assert ds.departs[0].name == '集团机关'
         assert len(ds.departs[0].children_names) > 0
         assert f'马钢（集团）控股有限公司(总部){utils.depart_sep}办公室（党委办公室）' in ds.departs[
             0].children_names

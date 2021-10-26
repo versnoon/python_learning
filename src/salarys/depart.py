@@ -52,10 +52,10 @@ class Departs:
         d.scope_no = s[1]  # 工资范围
         d.display_name = s[2]  # 机构显示名称
         d.name = s[3]  # ehr系统中单位名称
+        d.tax_dep_name = s[6]  # 税务机构
         if s[4]:
             if isinstance(s[4], str):
                 d.children_names = list(map(
-                    lambda x: f'{d.name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
-        d.tax_dep_name = s[6]  # 税务机构
+                    lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
         d.gjj_dep_name = s[7]  # 公积金类型
         return d
