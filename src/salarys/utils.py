@@ -11,3 +11,5 @@
 
 # 文件跟目录
 root_dir = r'D:\薪酬审核文件夹'
+
+depart_sep = '-X-'

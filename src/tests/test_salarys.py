@@ -11,6 +11,7 @@
 
 import src.salarys.period as period_op
 import src.salarys.depart as depart_op
+import src.salarys.utils as utils
 
 
 class TestSalarys:
@@ -31,5 +32,6 @@ class TestSalarys:
         assert len(ds.departs) > 0
         assert ds.departs[0].name == '马钢（集团）控股有限公司(总部)'
         assert len(ds.departs[0].children_names) > 0
-        assert '办公室（党委办公室）' in ds.departs[0].children_names
+        assert f'马钢（集团）控股有限公司(总部){utils.depart_sep}办公室（党委办公室）' in ds.departs[
+            0].children_names
         assert ds.departs[0].display_name == '集团机关'

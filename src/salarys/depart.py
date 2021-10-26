@@ -54,7 +54,8 @@ class Departs:
         d.name = s[3]  # ehr系统中单位名称
         if s[4]:
             if isinstance(s[4], str):
-                d.children_names = s[4].split(d.sep)  # 相关单位
+                d.children_names = list(map(
+                    lambda x: f'{d.name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
         d.tax_dep_name = s[6]  # 税务机构
         d.gjj_dep_name = s[7]  # 公积金类型
         return d
