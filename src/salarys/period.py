@@ -9,6 +9,8 @@
 '''
 
 
+from os import error
+from numpy import e
 import src.salarys.utils as utils
 import src.pandas.read_xls as prx
 
@@ -23,13 +25,19 @@ class Period:
         self.month = 12
         self.name = '当前审核日期'
         self.df = None
+        self.get_period()
+        self.err_paths = []
 
     def get_period(self):
         if not self.df:
-            self.df = prx.make_df_from_excel_files(
-                file_root_dir=utils.root_dir, file_name_prefix=self.name)
-        self.year = prx.get_df_cell_value(self.df, '当前审核日期', '年')
-        self.month = prx.get_df_cell_value(self.df, '当前审核日期', '月')
+            self.df, self.err_paths = prx.make_df_from_excel_files(
+                file_root_path=utils.root_dir, file_name_prefix=self.name)
+        if not self.df.empty:
+            self.year = prx.get_df_cell_value(self.df, '当前审核日期', '年')
+            self.month = prx.get_df_cell_value(self.df, '当前审核日期', '月')
+        else:
+            err_file_msg = '|'.join(self.err_paths)
+            raise ValueError(f'获取期间数据出错，错误文件:[{err_file_msg}]数据内容为空，或者文件不存在')
 
     def change_period(self, year, month):
         self.year = year

@@ -11,5 +11,7 @@
 
 # 文件跟目录
 root_dir = r'D:\薪酬审核文件夹'
+gz_jj_dir = '工资奖金数据'
+tax_dir = '税务相关数据'
 
 depart_sep = '-X-'

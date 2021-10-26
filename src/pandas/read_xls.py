@@ -18,22 +18,28 @@ def make_df_from_excel_files(
     file_sub_path='',
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
-    group_by=[]
+    group_by=[],
 ):
     chunks = []
+    err_paths = []
     file_dir = get_file_dir(period, file_sub_path, file_root_path)
     for file_name in os.listdir(file_dir):
         if file_name_validate(file_name, file_name_prefix, file_exts):
-            file_df = make_df_from_excel(get_file_path(
-                file_dir, file_name), file_name_prefix)
-            chunks.append(file_df)
+            file_path = get_file_path(
+                file_dir, file_name)
+            file_df, err_path = make_df_from_excel(file_path, file_name_prefix)
+            if not err_path and not file_df.empty:
+                chunks.append(file_df)
+            else:
+                err_paths.append(err_path)
+    df = pd.DataFrame()
     if len(chunks) > 0:
         df = pd.concat(chunks, ignore_index=True)
     if len(group_by) > 0:
         group_by_keys = [f'{file_name_prefix}-{col}' for col in group_by]
         df = df.groupby(group_by_keys, as_index=False)
         df = df.aggregate(np.sum)
-    return df
+    return df, err_paths
 
 
 def get_file_dir(period='', file_sub_path='', file_root_path=root_dir):
@@ -65,16 +71,23 @@ def file_ext_validator(file_name, file_exts):
 
 
 def make_df_from_excel(file_path, name):
-    head_row = 1
-    df_header = pd.read_excel(file_path, nrows=head_row)
-    # Rename the columns to concatenate the chunks with the header.
-    columns = {i: f'{name}-{col}' for i,
-               col in enumerate(df_header.columns.tolist())}
+    df_chunks = pd.DataFrame()
+    err_path = ''
+    if os.path.exists(file_path):
+        head_row = 1
+        df_header = pd.read_excel(file_path, nrows=head_row)
+        # Rename the columns to concatenate the chunks with the header.
+        columns = {i: f'{name}-{col}' for i,
+                   col in enumerate(df_header.columns.tolist())}
 
-    df_chunks = pd.read_excel(file_path, skiprows=head_row, header=None)
-
-    df_chunks.rename(columns=columns, inplace=True)
-    return df_chunks
+        df_chunks = pd.read_excel(file_path, skiprows=head_row, header=None)
+        if not df_chunks.empty:
+            df_chunks.rename(columns=columns, inplace=True)
+        else:
+            err_path = file_path
+    else:
+        err_path = file_path
+    return df_chunks, err_path
 
 
 def get_file_ext(file_path):

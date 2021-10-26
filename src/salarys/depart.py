@@ -34,14 +34,17 @@ class Departs:
         self.period = period
         self.df = None
         self.name = '审核机构信息'
+        self.get_departs()
+        self.err_paths = []
 
     def get_departs(self):
         if not self.period:
             raise ValueError(f'请指定期间信息')
         if not self.df:
-            self.df = prx.make_df_from_excel_files(
+            self.df, self.err_paths = prx.make_df_from_excel_files(
                 period=self.period, file_root_path=utils.root_dir, file_name_prefix=self.name)
-        self.departs = self.to_depart_infos(self.df)
+        if not self.df.empty:
+            self.departs = self.to_depart_infos(self.df)
 
     def to_depart_infos(self, df: pd.DataFrame) -> list:
         return list(map(lambda s: self.to_depart_info(s), df.values.tolist()))
