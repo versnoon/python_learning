@@ -47,7 +47,7 @@ def make_df_from_excel_files(
             df = pd.concat(chunks, ignore_index=True)
         if len(group_by) > 0:
             group_by_keys = [
-                f'{file_name_prefix}{utils.column_name_sep}{col}' for col in group_by]
+                get_column_name(file_name_prefix, col) for col in group_by]
             df = df.groupby(group_by_keys, as_index=False)
             df = df.aggregate(np.sum)
     else:
@@ -92,7 +92,7 @@ def make_df_from_excel(file_path, name):
         head_row = 1
         df_header = pd.read_excel(file_path, nrows=head_row)
         # Rename the columns to concatenate the chunks with the header.
-        columns = {i: f'{name}{utils.column_name_sep}{col}' for i,
+        columns = {i: get_column_name(name, col) for i,
                    col in enumerate(df_header.columns.tolist())}
 
         df_chunks = pd.read_excel(file_path, skiprows=head_row, header=None)
@@ -118,5 +118,9 @@ def get_file_ext(file_path):
 def get_df_cell_value(df, perfix, name, row=0):
     key = name
     if perfix:
-        key = f'{perfix}-{name}'
+        key = get_column_name(perfix, name)
     return df[key].values[row]
+
+
+def get_column_name(prefix, column_name):
+    return f'{prefix}{utils.column_name_sep}{column_name}'
