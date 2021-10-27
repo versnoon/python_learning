@@ -41,7 +41,6 @@ class TestSalarys:
 
     def test_salary_infos(self):
         gzs = s_infos.SalaryGzs(period)
-        gzs.df.to_excel('c.xlsx')
         assert ~gzs.df.empty
         assert gzs.df[f'{gzs.name}-员工通行证'].any()
 
