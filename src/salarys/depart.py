@@ -61,12 +61,21 @@ class Departs:
             if isinstance(s[4], str):
                 d.children_names = list(map(
                     lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
-        if s[4]:
+        if s[8]:
             if isinstance(s[8], str):
                 d.his_names = list(map(
-                    lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[8].split(d.sep)))  # 相关单位
+                    lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[8].split(d.sep)))  # 历史
         d.gjj_dep_name = s[7]  # 公积金类型
         return d
 
     def tax_departs(self):
-        return self.df[f"{self.name}-税务机构"].drop_duplicates().to_list()
+        return self.df["税务机构"].drop_duplicates().to_list()
+
+    def display_depart_name(self, tax, depart_name):
+        for d in self.departs:
+            if tax == d.tax_dep_name:
+                if depart_name == d.name:
+                    return d.display_name
+                elif f"{tax}{utils.depart_sep}{depart_name}" in d.children_names or f"{tax}{utils.depart_sep}{depart_name}" in d.his_names:
+                    return d.display_name
+        return ""

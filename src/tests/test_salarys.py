@@ -38,21 +38,28 @@ class TestSalarys:
         assert f'马钢（集团）控股有限公司(总部){utils.depart_sep}人力资源服务中心' in ds.departs[
             0].his_names
         assert ds.departs[0].display_name == '集团机关'
+        assert "集团机关" == ds.display_depart_name(
+            "马钢（集团）控股有限公司(总部)", "办公室（党委办公室）")
+        assert "集团机关" == ds.display_depart_name(
+            "马钢（集团）控股有限公司(总部)", "人力资源服务中心")
+        assert "" == ds.display_depart_name(
+            "马钢（集团）控股有限公司(总部)", "办公室（党委办公室）1")
 
     def test_salary_infos(self):
-        gzs = s_infos.SalaryGzs(period)
+        ds = depart_op.Departs(period=period)
+        gzs = s_infos.SalaryGzs(period, departs=ds)
         assert ~gzs.df.empty
         assert gzs.df[f'{gzs.name}-员工通行证'].any()
 
-        jjs = s_infos.SalaryJjs(period)
+        jjs = s_infos.SalaryJjs(period, departs=ds)
         assert ~jjs.df.empty
         assert jjs.df[f'{jjs.name}-员工通行证'].any()
 
-        banks = s_infos.SalaryBanks(period)
+        banks = s_infos.SalaryBanks(period, departs=ds)
         assert ~gzs.df.empty
         assert banks.df[f'{banks.name}-员工通行证'].any()
 
-        jobs = s_infos.SalaryPersonJobs(period)
+        jobs = s_infos.SalaryPersonJobs(period, departs=ds)
         assert ~jobs.df.empty
         assert jobs.df[f'{jobs.name}-员工通行证'].any()
 
@@ -60,7 +67,14 @@ class TestSalarys:
         assert ~persons.df.empty
         assert persons.df[f'{persons.name}-员工通行证'].any()
 
-    def test_salary_infos_taxs(self):
+    # def test_salary_infos_taxs(self):
+    #     ds = depart_op.Departs(period=period)
+    #     taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
+    #     assert len(taxs) == 2
+
+    def test_depart_display_info(self):
         ds = depart_op.Departs(period=period)
-        taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
-        assert len(taxs.dfs) == 2
+        gzs = s_infos.SalaryGzs(period, ds)
+        assert ~gzs.df.empty
+        assert gzs.df[f'{gzs.name}-员工通行证'].any()
+        assert gzs.df[f'{gzs.name}-{utils.depart_display_column_name}'].any()

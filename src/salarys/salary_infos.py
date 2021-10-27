@@ -9,16 +9,15 @@
 '''
 
 
-from os import name
-
-from numpy import column_stack
+from numpy import not_equal
 import src.salarys.data_read as prx
 import src.salarys.utils as utils
 
 
 class SalaryBaseInfo:
-    def __init__(self, period) -> None:
+    def __init__(self, period, departs=None) -> None:
         self.period = period
+        self.departs = departs
         if not self.period:
             raise ValueError(f'请指定期间信息')
         self.name = ''
@@ -62,21 +61,29 @@ class SalaryBaseInfo:
             self.name, utils.depart_info_column_name)
         if depart_column_name in columns:
             departs = self.df[depart_column_name].values.tolist()
+            tax_name = get_column_name(self.name, utils.tax_column_name)
+            self.df[tax_name] = split_depart_infos(departs)
+            depart_name = get_column_name(
+                self.name, utils.depart_column_name)
+            self.df[depart_name] = split_depart_infos(departs, 1)
+
+            depart_infos = self.df[[tax_name, depart_name]].values.tolist()
             self.df[get_column_name(
-                self.name, utils.tax_column_name)] = split_depart_infos(departs)
-            self.df[get_column_name(
-                self.name, utils.depart_column_name)] = split_depart_infos(departs, 1)
-            self.df[get_column_name(
-                self.name, utils.depart_display_column_name)] = get_depart_display_info()
+                self.name, utils.depart_display_column_name)] = get_depart_display_info(depart_infos, self.departs)
 
     def get_infos(self):
+        # 读取
         self.get_df_and_err_paths()
+        # 列明规范化
         self.rename_columns()
+        # 增加税组单位等信息
         self.append_tax_name_and_display_name()
+        # 分组合计
         if len(self.group_by) > 0:
             prx.group_by_columns(self.df, self.get_group_by_columns_info())
 
-        self.df.to_excel(f'{self.name}{utils.column_name_sep}x.xlsx')
+        # 导出
+        # self.df.to_excel(f'{self.name}{utils.column_name_sep}x.xlsx')
 
 
 class SalaryGzs(SalaryBaseInfo):
@@ -84,8 +91,8 @@ class SalaryGzs(SalaryBaseInfo):
     工资信息
     """
 
-    def __init__(self, period) -> None:
-        super().__init__(period)
+    def __init__(self, period, departs) -> None:
+        super().__init__(period, departs)
         self.name = '工资信息'
         self.file_sub_dir = [utils.gz_jj_dir]
         super().get_infos()
@@ -96,8 +103,8 @@ class SalaryJjs(SalaryBaseInfo):
     奖金信息
     """
 
-    def __init__(self, period) -> None:
-        super().__init__(period)
+    def __init__(self, period, departs) -> None:
+        super().__init__(period, departs)
         self.name = '奖金信息'
         self.file_sub_dir = [utils.gz_jj_dir]
         self.group_by = [utils.tax_column_name,
@@ -110,8 +117,8 @@ class SalaryBanks(SalaryBaseInfo):
     银行卡信息
     """
 
-    def __init__(self, period) -> None:
-        super().__init__(period)
+    def __init__(self, period, departs) -> None:
+        super().__init__(period, departs)
         self.name = '银行卡信息'
         super().get_infos()
 
@@ -132,8 +139,8 @@ class SalaryPersonJobs(SalaryBaseInfo):
     发薪人员岗位信息
     """
 
-    def __init__(self, period) -> None:
-        super().__init__(period)
+    def __init__(self, period, departs) -> None:
+        super().__init__(period, departs)
         self.name = '岗位聘用信息'
         super().get_infos()
 
@@ -167,8 +174,9 @@ def split_depart_infos(departs, no=0):
         utils.depart_info_sep)[no], departs))
 
 
-def get_depart_display_info():
-    pass
+def get_depart_display_info(depart_infos, departs):
+    if departs:
+        return list(map(lambda s: departs.display_depart_name(s[0], s[1]), depart_infos))
 
 
 def get_column_name(prefix, column_name):
