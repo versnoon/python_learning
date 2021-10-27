@@ -26,7 +26,6 @@ def make_df_from_excel_files(
     file_sub_path=[],
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
-    group_by=[],
 ):
     chunks = []
     err_paths = []
@@ -45,15 +44,16 @@ def make_df_from_excel_files(
                     err_paths.append(err_path)
         if len(chunks) > 0:
             df = pd.concat(chunks, ignore_index=True)
-        if len(group_by) > 0:
-            group_by_keys = [
-                get_column_name(file_name_prefix, col) for col in group_by]
-            df = df.groupby(group_by_keys, as_index=False)
-            df = df.aggregate(np.sum)
     else:
         err_paths.append(file_dir)
 
     return df, err_paths
+
+
+def group_by_columns(df, group_by_columns=[]):
+    if len(group_by_columns) > 0:
+        df = df.groupby(group_by_columns, as_index=False)
+        df = df.aggregate(np.sum)
 
 
 def get_file_dir(file_root_path, period='', file_sub_path=[]):
@@ -89,16 +89,8 @@ def make_df_from_excel(file_path, name):
     df_chunks = pd.DataFrame()
     err_path = ''
     if os.path.exists(file_path):
-        head_row = 1
-        df_header = pd.read_excel(file_path, nrows=head_row)
-        # Rename the columns to concatenate the chunks with the header.
-        columns = {i: get_column_name(name, col) for i,
-                   col in enumerate(df_header.columns.tolist())}
-
-        df_chunks = pd.read_excel(file_path, skiprows=head_row, header=None)
-        if not df_chunks.empty:
-            df_chunks.rename(columns=columns, inplace=True)
-        else:
+        df_chunks = pd.read_excel(file_path)
+        if df_chunks.empty:
             err_path = file_path
     else:
         err_path = file_path
@@ -115,12 +107,8 @@ def get_file_ext(file_path):
     return ext[-1].lower()
 
 
-def get_df_cell_value(df, perfix, name, row=0):
-    key = name
-    if perfix:
-        key = get_column_name(perfix, name)
-    return df[key].values[row]
-
-
-def get_column_name(prefix, column_name):
-    return f'{prefix}{utils.column_name_sep}{column_name}'
+def get_df_cell_value(df, column_name, row=0):
+    key = column_name
+    if not df[key].empty:
+        return df[key].values[row]
+    return ''

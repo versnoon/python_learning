@@ -113,8 +113,9 @@ class TestPandas:
         assert prx.file_name_prefix_validator("~工资信息-股份.xlsx", "工资信息") is False
 
     def test_make_df_from_excel_files(self):
-        df_jj, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(), period=period, file_sub_path=['工资奖金数据'], file_name_prefix='奖金信息', group_by=[
-            '员工通行证', '员工姓名', '机构'])
+        df_jj, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(
+        ), period=period, file_sub_path=['工资奖金数据'], file_name_prefix='奖金信息')
+        prx.group_by_columns(df_jj, ['奖金信息-员工通行证', '奖金信息-机构'])
         df_jj = df_jj.loc[df_jj['奖金信息-员工通行证'] == 'M70359']
         assert df_jj['奖金信息-员工通行证'].values[0] == 'M70359'
         df_gz, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(),
@@ -123,8 +124,10 @@ class TestPandas:
         assert df_gz['工资信息-员工通行证'].values[0] == 'M70359'
 
     def test_df_merge(self):
-        df_jj, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(), period=period, file_sub_path=['工资奖金数据'], file_name_prefix='奖金信息', group_by=[
-            '员工通行证', '员工姓名', '机构'])
+        df_jj, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(
+        ), period=period, file_sub_path=['工资奖金数据'], file_name_prefix='奖金信息')
+        prx.group_by_columns(df_jj, ['奖金信息-员工通行证', '奖金信息-机构'])
+
         df_gz, _ = prx.make_df_from_excel_files(file_root_path=utils.root_dir_(),
                                                 period=period, file_sub_path=['工资奖金数据'], file_name_prefix='工资信息')
 

@@ -14,7 +14,6 @@ def make_df_from_excel_files(
     file_sub_path=[],
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
-    group_by=[],
 ):
     chunks = []
     err_paths = []
@@ -33,14 +32,16 @@ def make_df_from_excel_files(
                     err_paths.append(err_path)
         if len(chunks) > 0:
             df = pd.concat(chunks, ignore_index=True)
-        if len(group_by) > 0:
-            group_by_keys = [f'{file_name_prefix}-{col}' for col in group_by]
-            df = df.groupby(group_by_keys, as_index=False)
-            df = df.aggregate(np.sum)
     else:
         err_paths.append(file_dir)
 
     return df, err_paths
+
+
+def group_by_columns(df, group_by_columns=[]):
+    if len(group_by_columns) > 0:
+        df = df.groupby(group_by_columns, as_index=False)
+        df = df.aggregate(np.sum)
 
 
 def get_file_dir(file_root_path, period='', file_sub_path=[]):

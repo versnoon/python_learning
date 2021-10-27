@@ -33,8 +33,8 @@ class Period:
             self.df, self.err_paths = prx.make_df_from_excel_files(
                 file_root_path=utils.root_dir_(), file_name_prefix=self.name)
         if not self.df.empty:
-            self.year = prx.get_df_cell_value(self.df, '当前审核日期', '年')
-            self.month = prx.get_df_cell_value(self.df, '当前审核日期', '月')
+            self.year = prx.get_df_cell_value(self.df, '年')
+            self.month = prx.get_df_cell_value(self.df, '月')
         else:
             err_file_msg = '|'.join(self.err_paths)
             raise ValueError(f'获取期间数据出错，错误文件:[{err_file_msg}]数据内容为空，或者文件不存在')

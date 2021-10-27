@@ -19,6 +19,15 @@ tax_dir = '税务相关数据'
 
 depart_sep = '-X-'
 column_name_sep = '-'
+depart_info_sep = '\\'
+
+
+depart_info_column_name = '机构'
+code_info_column_name = '员工通行证'
+
+tax_column_name = '税务机构'
+depart_column_name = '单位名称'
+depart_display_column_name = '单位显示名称'
 
 
 def root_dir_() -> str:

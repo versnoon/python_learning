@@ -54,11 +54,11 @@ class TestSalarys:
 
         jobs = s_infos.SalaryPersonJobs(period)
         assert ~jobs.df.empty
-        assert jobs.df[f'{jobs.name}-通行证'].any()
+        assert jobs.df[f'{jobs.name}-员工通行证'].any()
 
         persons = s_infos.SalaryPersons(period)
         assert ~persons.df.empty
-        assert persons.df[f'{persons.name}-通行证'].any()
+        assert persons.df[f'{persons.name}-员工通行证'].any()
 
     def test_salary_infos_taxs(self):
         ds = depart_op.Departs(period=period)
