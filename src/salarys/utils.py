@@ -18,6 +18,7 @@ gz_jj_dir = '工资奖金数据'
 tax_dir = '税务相关数据'
 
 depart_sep = '-X-'
+column_name_sep = '-'
 
 
 def root_dir_() -> str:

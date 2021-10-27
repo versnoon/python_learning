@@ -11,7 +11,7 @@
 
 import pandas as pd
 import src.salarys.utils as utils
-import src.pandas.read_xls as prx
+import src.salarys.data_read as prx
 
 
 class Depart:

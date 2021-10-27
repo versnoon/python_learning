@@ -12,7 +12,7 @@
 from os import error
 from numpy import e
 import src.salarys.utils as utils
-import src.pandas.read_xls as prx
+import src.salarys.data_read as prx
 
 
 class Period:

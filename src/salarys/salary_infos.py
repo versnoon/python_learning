@@ -8,9 +8,8 @@
 @Contact :   tongtan@gmail.com
 '''
 
-import os
 
-import src.pandas.read_xls as prx
+import src.salarys.data_read as prx
 import src.salarys.utils as utils
 
 
@@ -48,6 +47,7 @@ class SalaryGzs(SalaryBaseInfo):
         self.name = '工资信息'
         self.file_sub_dir = [utils.gz_jj_dir]
         super().get_infos()
+        self.df.rename(columns={f'{self.name}': '', '': ''}, inplace=True)
 
 
 class SalaryJjs(SalaryBaseInfo):
