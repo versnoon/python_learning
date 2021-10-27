@@ -120,4 +120,9 @@ class SalaryTaxs(SalaryBaseInfo):
 
 
 class SalaryInfos:
+    # 解析机构信息葛df增加税务机构、ehr机构、身份证、岗位等信息
+    # 包含
+    # 工资奖金信息
+    # 银行卡信息
+    #
     pass

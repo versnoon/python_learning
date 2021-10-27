@@ -24,6 +24,7 @@ class Depart:
         self.sort_no = 99  # 显示顺序
         self.tax_dep_name = ''  # 税务机构
         self.gjj_dep_name = ''  # 公积金类别
+        self.his_names = []  # 历史机构名称
         self.sep = '|'  # 默认机构间分隔符
 
 
@@ -60,6 +61,10 @@ class Departs:
             if isinstance(s[4], str):
                 d.children_names = list(map(
                     lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[4].split(d.sep)))  # 相关单位
+        if s[4]:
+            if isinstance(s[8], str):
+                d.his_names = list(map(
+                    lambda x: f'{d.tax_dep_name}{utils.depart_sep}{x}', s[8].split(d.sep)))  # 相关单位
         d.gjj_dep_name = s[7]  # 公积金类型
         return d
 

@@ -35,10 +35,13 @@ class TestSalarys:
         assert len(ds.departs[0].children_names) > 0
         assert f'马钢（集团）控股有限公司(总部){utils.depart_sep}办公室（党委办公室）' in ds.departs[
             0].children_names
+        assert f'马钢（集团）控股有限公司(总部){utils.depart_sep}人力资源服务中心' in ds.departs[
+            0].his_names
         assert ds.departs[0].display_name == '集团机关'
 
     def test_salary_infos(self):
         gzs = s_infos.SalaryGzs(period)
+        gzs.df.to_excel('c.xlsx')
         assert ~gzs.df.empty
         assert gzs.df[f'{gzs.name}-员工通行证'].any()
 
