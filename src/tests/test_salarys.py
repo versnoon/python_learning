@@ -56,7 +56,7 @@ class TestSalarys:
         assert jjs.df[f'{jjs.name}-员工通行证'].any()
 
         banks = s_infos.SalaryBanks(period, departs=ds)
-        assert ~gzs.df.empty
+        assert ~banks.df.empty
         assert banks.df[f'{banks.name}-员工通行证'].any()
 
         jobs = s_infos.SalaryPersonJobs(period, departs=ds)
@@ -67,10 +67,13 @@ class TestSalarys:
         assert ~persons.df.empty
         assert persons.df[f'{persons.name}-员工通行证'].any()
 
-    # def test_salary_infos_taxs(self):
-    #     ds = depart_op.Departs(period=period)
-    #     taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
-    #     assert len(taxs) == 2
+    def test_salary_infos_taxs(self):
+        ds = depart_op.Departs(period=period)
+        taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
+        taxs.df.to_excel('x.xlsx')
+        assert ~taxs.df.empty
+        assert taxs.df['证件号码'].any()
+        assert taxs.df[f'{taxs.name}-{utils.tax_column_name}'].any()
 
     def test_depart_display_info(self):
         ds = depart_op.Departs(period=period)
@@ -78,3 +81,16 @@ class TestSalarys:
         assert ~gzs.df.empty
         assert gzs.df[f'{gzs.name}-员工通行证'].any()
         assert gzs.df[f'{gzs.name}-{utils.depart_display_column_name}'].any()
+
+    def test_bank_info(self):
+        ds = depart_op.Departs(period=period)
+        banks = s_infos.SalaryBanks(period, departs=ds)
+        assert ~banks.df.empty
+        assert banks.df[f'{banks.name}-员工通行证'].any()
+        gz = s_infos.get_value_with_suffix(
+            banks, "M08175", "卡号", 'x')
+        assert gz == 1306212001001966586
+        assert s_infos.get_value_with_suffix(
+            banks, "M08175", "卡号", 'y') == 1306212001001966586
+        assert s_infos.get_value_with_suffix(
+            banks, "M70847", "卡号", 'y') == 6212261306001042571

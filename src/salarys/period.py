@@ -43,5 +43,8 @@ class Period:
         self.year = year
         self.month = month
 
+    def get_period_info(self) -> str:
+        return self.__str__()
+
     def __str__(self) -> str:
         return "{:0>4d}{:0>2d}".format(int(self.year), int(self.month))

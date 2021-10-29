@@ -13,8 +13,6 @@ import os
 import numpy as np
 import pandas as pd
 
-import src.salarys.utils as utils
-
 
 # 一次读取多少条记录
 rows_per_one_read = 3000
@@ -26,6 +24,7 @@ def make_df_from_excel_files(
     file_sub_path=[],
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
+    converters={}
 ):
     chunks = []
     err_paths = []
@@ -37,7 +36,7 @@ def make_df_from_excel_files(
                 file_path = get_file_path(
                     file_dir, file_name)
                 file_df, err_path = make_df_from_excel(
-                    file_path, file_name_prefix)
+                    file_path, converters)
                 if not err_path and not file_df.empty:
                     chunks.append(file_df)
                 else:
@@ -85,11 +84,11 @@ def file_ext_validator(file_name, file_exts):
     return False
 
 
-def make_df_from_excel(file_path, name):
+def make_df_from_excel(file_path, converters):
     df_chunks = pd.DataFrame()
     err_path = ''
     if os.path.exists(file_path):
-        df_chunks = pd.read_excel(file_path)
+        df_chunks = pd.read_excel(file_path, converters=converters)
         if df_chunks.empty:
             err_path = file_path
     else:

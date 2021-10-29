@@ -19,6 +19,7 @@ tax_dir = '税务相关数据'
 
 depart_sep = '-X-'
 column_name_sep = '-'
+column_name_suffix_sep = '_'
 depart_info_sep = '\\'
 
 

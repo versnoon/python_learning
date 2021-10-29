@@ -36,6 +36,7 @@ class Departs:
         self.df = None
         self.name = '审核机构信息'
         self.get_departs()
+        self.display_names = self.display_depart_names()
         self.err_paths = []
 
     def get_departs(self):
@@ -72,10 +73,22 @@ class Departs:
         return self.df["税务机构"].drop_duplicates().to_list()
 
     def display_depart_name(self, tax, depart_name):
-        for d in self.departs:
-            if tax == d.tax_dep_name:
-                if depart_name == d.name:
-                    return d.display_name
-                elif f"{tax}{utils.depart_sep}{depart_name}" in d.children_names or f"{tax}{utils.depart_sep}{depart_name}" in d.his_names:
-                    return d.display_name
+        key = f"{tax}{utils.depart_sep}{depart_name}"
+        if key in self.display_names:
+            return self.display_names[key]
         return ""
+
+    def display_depart_names(self):
+        r = dict()
+        for d in self.departs:
+            tax = d.tax_dep_name
+            depart_name = d.name
+            display_name = d.display_name
+            children_names = d.children_names
+            his_names = d.his_names
+            r[f"{tax}{utils.depart_sep}{depart_name}"] = display_name
+            for c_name in children_names:
+                r[f"{c_name}"] = display_name
+            for h_name in his_names:
+                r[f"{h_name}"] = display_name
+        return r
