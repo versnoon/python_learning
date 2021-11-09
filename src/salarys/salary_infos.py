@@ -245,7 +245,6 @@ def contact_bank_info(df, banks):
         banks.name, "金融机构", "奖金卡"), get_column_name(
         banks.name, "卡号", "奖金卡")]]
     s = pd.merge(df, bank_df, on=[utils.code_info_column_name], how='outer')
-    s.to_excel("bank.xlsx")
     return s
 
 

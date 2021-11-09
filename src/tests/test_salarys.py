@@ -113,3 +113,5 @@ class TestSalarys:
         assert s[f'{banks.name}-卡号_奖金卡'].any()
         assert s_infos.get_value_with_suffix(
             s, banks.name, "M73677", "卡号", "工资卡") == '6217231306000241097'
+        assert s_infos.get_value_with_suffix(
+            s, banks.name, "M73677", "卡号", "奖金卡") == '6217231306000241097'
