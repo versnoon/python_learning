@@ -133,7 +133,7 @@ class SalaryBanks(SalaryBaseInfo):
             self.name, "卡用途")].str.contains('工资卡') == True]
         jj_bank_df = self.df[(self.df[get_column_name(
             self.name, "卡用途")].str.contains('奖金卡')) == True]
-        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.depart_display_column_name], suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
+        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.tax_column_name, utils.depart_display_column_name], suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
 
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -233,18 +233,39 @@ def merge_gz_and_jj(gz_infos, jj_infos):
 
 def contact_id_info(df, persons):
     id_df = persons.df[[utils.code_info_column_name, get_column_name(
-        persons.name, utils.person_id_column_name)]]
+        persons.name, utils.person_id_column_name), get_column_name(
+        persons.name, "手机号码")]]
     s = pd.merge(df, id_df, on=[utils.code_info_column_name], how='outer')
     return s
 
 
 def contact_bank_info(df, banks):
-    bank_df = banks.df[[utils.code_info_column_name, get_column_name(
+    bank_df = banks.df[[utils.code_info_column_name,  utils.tax_column_name, utils.depart_display_column_name, get_column_name(
         banks.name, "金融机构", "工资卡"), get_column_name(
         banks.name, "卡号", "工资卡"), get_column_name(
         banks.name, "金融机构", "奖金卡"), get_column_name(
         banks.name, "卡号", "奖金卡")]]
-    s = pd.merge(df, bank_df, on=[utils.code_info_column_name], how='outer')
+    s = pd.merge(df, bank_df, on=[
+                 utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer')
+    return s
+
+
+def contact_job_info(df, jobs):
+    job_df = jobs.df[[utils.code_info_column_name,  utils.tax_column_name, utils.depart_display_column_name, get_column_name(
+        jobs.name, "岗位类型"), get_column_name(
+        jobs.name, "执行岗位名称"), get_column_name(
+        jobs.name, "岗位层级"), get_column_name(
+        jobs.name, "组合(岗位序列+标准目录+岗位层级)")]]
+    s = pd.merge(df, job_df, on=[
+                 utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer')
+    return s
+
+
+def contact_tax_info(df, tax):
+    tax_df = tax.df[[utils.person_id_column_name,
+                     utils.tax_column_name, "累计应补(退)税额"]]
+    s = pd.merge(df, tax_df, left_on=["人员信息导出结果-证件号码", utils.tax_column_name], right_on=[
+                 utils.person_id_column_name, utils.tax_column_name], how='outer')
     return s
 
 

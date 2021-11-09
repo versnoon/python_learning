@@ -115,3 +115,12 @@ class TestSalarys:
             s, banks.name, "M73677", "卡号", "工资卡") == '6217231306000241097'
         assert s_infos.get_value_with_suffix(
             s, banks.name, "M73677", "卡号", "奖金卡") == '6217231306000241097'
+        jobs = s_infos.SalaryPersonJobs(period, departs=ds)
+        s = s_infos.contact_job_info(s, jobs)
+        assert s[f'{jobs.name}-岗位类型'].any()
+        assert s_infos.get_value(s, "", "M73677", s_infos.get_column_name(
+            jobs.name, "岗位类型")) == '管理类'
+        taxs = s_infos.SalaryTaxs(period, ds.tax_departs())
+        s = s_infos.contact_tax_info(s, taxs)
+        assert s["累计应补(退)税额"].any()
+        assert s_infos.get_value(s, "", "M73677", "累计应补(退)税额") == 971.68
