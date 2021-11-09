@@ -101,6 +101,13 @@ class TestSalarys:
         jjs = s_infos.SalaryJjs(period, departs=ds)
         persons = s_infos.SalaryPersons(period)
         s = s_infos.merge_gz_and_jj(gzs, jjs)
+        s.to_excel('s.xlsx')
+        assert s_infos.get_value(
+            s, "", "M73677", "应发合计") == 3712.6 + 17561
+        assert s_infos.get_value(
+            s, "", "M73677", "实发合计") == 155.78 + 16589.32
+        assert s_infos.get_value(
+            s, "", "M73677", "所得税") == 0 - (0 + -971.68)
         s = s_infos.contact_id_info(s, persons)
         assert s_infos.get_value(
             s, "", "M73677", utils.code_info_column_name) == "M73677"
