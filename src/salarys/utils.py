@@ -29,6 +29,7 @@ code_info_column_name = '员工通行证'
 tax_column_name = '税务机构'
 depart_column_name = '单位名称'
 depart_display_column_name = '单位显示名称'
+person_id_column_name = '证件号码'
 
 
 def root_dir_() -> str:

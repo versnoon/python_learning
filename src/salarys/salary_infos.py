@@ -31,7 +31,7 @@ class SalaryBaseInfo:
         self.err_paths = []
 
     def get_group_by_columns_info(self):
-        return [get_column_name(self.name, col) for col in self.group_by]
+        return [col for col in self.group_by]
 
     def get_df_and_err_paths(self):
         if not self.df:
@@ -64,15 +64,14 @@ class SalaryBaseInfo:
             self.name, utils.depart_info_column_name)
         if depart_column_name in columns:
             departs = self.df[depart_column_name].values.tolist()
-            tax_name = get_column_name(self.name, utils.tax_column_name)
+            tax_name = utils.tax_column_name
             self.df[tax_name] = split_depart_infos(departs)
-            depart_name = get_column_name(
-                self.name, utils.depart_column_name)
+            depart_name = utils.depart_column_name
             self.df[depart_name] = split_depart_infos(departs, 1)
 
             depart_infos = self.df[[tax_name, depart_name]].values.tolist()
-            self.df[get_column_name(
-                self.name, utils.depart_display_column_name)] = get_depart_display_info(depart_infos, self.departs)
+            self.df[utils.depart_display_column_name] = get_depart_display_info(
+                depart_infos, self.departs)
 
     def get_infos(self):
         # 读取
@@ -134,7 +133,7 @@ class SalaryBanks(SalaryBaseInfo):
             self.name, "卡用途")].str.contains('工资卡') == True]
         jj_bank_df = self.df[(self.df[get_column_name(
             self.name, "卡用途")].str.contains('奖金卡')) == True]
-        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), get_column_name(self.name, utils.depart_display_column_name)])
+        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.depart_display_column_name])
 
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -185,8 +184,7 @@ class SalaryTaxs(SalaryBaseInfo):
                 df, _ = prx.make_df_from_excel_files(
                     period=self.period, file_root_path=utils.root_dir_(), file_sub_path=[utils.tax_dir, tax_depart], file_name_prefix=self.name)
                 if not df.empty:
-                    tax_name = get_column_name(
-                        self.name, utils.tax_column_name)
+                    tax_name = utils.tax_column_name
                     df[tax_name] = tax_depart
                     chunks.append(df)
             if len(chunks) > 0:
@@ -204,6 +202,8 @@ def get_depart_display_info(depart_infos, departs):
 
 
 def get_column_name(prefix, column_name):
+    if column_name == utils.code_info_column_name:
+        return column_name
     return f'{prefix}{utils.column_name_sep}{column_name}'
 
 
@@ -224,14 +224,21 @@ def load_data_to_frame():
 
 
 def merge_gz_and_jj(gz_infos, jj_infos):
-    df = pd.merge(gz_infos.df, jj_infos.df, left_on=[get_column_name(
-        gz_infos.name, utils.code_info_column_name), get_column_name(
-        gz_infos.name, utils.tax_column_name), get_column_name(
-        gz_infos.name, utils.depart_display_column_name)], right_on=[get_column_name(
-            jj_infos.name, utils.code_info_column_name), get_column_name(
-            jj_infos.name, utils.tax_column_name), get_column_name(
-            jj_infos.name, utils.depart_display_column_name)], how='outer')
+    df = pd.merge(gz_infos.df, jj_infos.df, on=[
+                  utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=['_工资', '_奖金'])
     return df
+
+
+def contact_id_info(df, persons):
+    id_df = persons.df[[utils.code_info_column_name, get_column_name(
+        persons.name, utils.person_id_column_name)]]
+    s = pd.merge(df, id_df, on=[utils.code_info_column_name], how='outer')
+    return s
+
+
+def contact_bank_info(df, banks):
+    bank_df = df.df[[utils.code_info_column_name, get_column_name(
+        banks.name, utils.person_id_column_name)]]
 
 
 def append_code_and_id_and_bank_and_tax_and_job(df, persons, banks, jobs):
@@ -254,16 +261,18 @@ def append_code_and_id_and_bank_and_tax_and_job(df, persons, banks, jobs):
     # df.tail(200).to_excel('x.xlsx')
 
 
-def get_value(df, code, c_name):
-    return get_value_with_suffix(df, code, c_name)
+def get_value(df, name, code, c_name):
+    return get_value_with_suffix(df, name, code, c_name, "")
 
 
-def get_value_with_suffix(df, code, c_name, suffix):
-    p_df = df.df[df.df[get_column_name(
-        df.name, utils.code_info_column_name)] == code]
+def get_value_with_suffix(df, name, code, c_name, suffix):
+    p_df = df[df[utils.code_info_column_name] == code]
     if p_df.empty:
         return ""
     if suffix:
         c_name = add_column_name_suffix(c_name, suffix)
-    df = p_df[get_column_name(df.name, c_name)]
-    return df.values[0]
+    key = c_name
+    if name:
+        key = get_column_name(name, c_name)
+    d = p_df[key]
+    return d.values[0]
