@@ -239,11 +239,11 @@ def contact_info(gzs, jjs, banks, jobs, persons, tax):
 def merge_gz_and_jj(gz_infos, jj_infos):
     df = pd.merge(gz_infos.df, jj_infos.df, on=[
                   utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=['_工资', '_奖金'])
-    df["应发合计"] = df[get_column_name(
+    df[utils.yingfa_column_name] = df[get_column_name(
         gz_infos.name, "应发")] + df[get_column_name(jj_infos.name, "应发")]
-    df["实发合计"] = df[get_column_name(
+    df[utils.shifa_column_name] = df[get_column_name(
         gz_infos.name, "实发")] + df[get_column_name(jj_infos.name, "实发")]
-    df["所得税"] = 0 - (df[get_column_name(
+    df[utils.suodeshui_column_name] = 0 - (df[get_column_name(
         gz_infos.name, "个调税")] + df[get_column_name(jj_infos.name, "个调税")])
     return df
 
