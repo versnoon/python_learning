@@ -87,12 +87,12 @@ class TestSalarys:
         assert ~banks.df.empty
         assert banks.df[f'员工通行证'].any()
         gz = s_infos.get_value_with_suffix(
-            banks.df, banks.name, "M08175", "卡号", 'x')
+            banks.df, banks.name, "M08175", "卡号", '工资卡')
         assert gz == 1306212001001966586
         assert s_infos.get_value_with_suffix(
-            banks.df, banks.name, "M08175", "卡号", 'y') == 1306212001001966586
+            banks.df, banks.name, "M08175", "卡号", '奖金卡') == 1306212001001966586
         assert s_infos.get_value_with_suffix(
-            banks.df, banks.name, "M70847", "卡号", 'y') == 6212261306001042571
+            banks.df, banks.name, "M70847", "卡号", '奖金卡') == 6212261306001042571
 
     def test_contact_some_info(self):
         ds = depart_op.Departs(period=period)
@@ -107,3 +107,9 @@ class TestSalarys:
         assert s[f'{persons.name}-{utils.person_id_column_name}'].any()
         assert s_infos.get_value(s, "", "M73677", s_infos.get_column_name(
             persons.name, utils.person_id_column_name)) == '34022219820226691X'
+        banks = s_infos.SalaryBanks(period, departs=ds)
+        s = s_infos.contact_bank_info(s, banks)
+        assert s[f'{banks.name}-卡号_工资卡'].any()
+        assert s[f'{banks.name}-卡号_奖金卡'].any()
+        assert s_infos.get_value_with_suffix(
+            s, banks.name, "M73677", "卡号", "工资卡") == '6217231306000241097'

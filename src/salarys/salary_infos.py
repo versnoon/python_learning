@@ -133,7 +133,7 @@ class SalaryBanks(SalaryBaseInfo):
             self.name, "卡用途")].str.contains('工资卡') == True]
         jj_bank_df = self.df[(self.df[get_column_name(
             self.name, "卡用途")].str.contains('奖金卡')) == True]
-        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.depart_display_column_name])
+        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.depart_display_column_name], suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
 
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -201,9 +201,11 @@ def get_depart_display_info(depart_infos, departs):
         return list(map(lambda s: departs.display_depart_name(s[0], s[1]), depart_infos))
 
 
-def get_column_name(prefix, column_name):
+def get_column_name(prefix, column_name, suffix=""):
     if column_name == utils.code_info_column_name:
         return column_name
+    if suffix:
+        column_name = add_column_name_suffix(column_name, suffix)
     return f'{prefix}{utils.column_name_sep}{column_name}'
 
 
@@ -237,8 +239,14 @@ def contact_id_info(df, persons):
 
 
 def contact_bank_info(df, banks):
-    bank_df = df.df[[utils.code_info_column_name, get_column_name(
-        banks.name, utils.person_id_column_name)]]
+    bank_df = banks.df[[utils.code_info_column_name, get_column_name(
+        banks.name, "金融机构", "工资卡"), get_column_name(
+        banks.name, "卡号", "工资卡"), get_column_name(
+        banks.name, "金融机构", "奖金卡"), get_column_name(
+        banks.name, "卡号", "奖金卡")]]
+    s = pd.merge(df, bank_df, on=[utils.code_info_column_name], how='outer')
+    s.to_excel("bank.xlsx")
+    return s
 
 
 def append_code_and_id_and_bank_and_tax_and_job(df, persons, banks, jobs):
