@@ -50,11 +50,7 @@ class SalaryBaseInfo:
 
         # 规范关键字段的字段名称
         self.df.rename(
-            columns={'通行证': utils.code_info_column_name}, inplace=True)
-        self.df.rename(
-            columns={'部门': utils.depart_info_column_name}, inplace=True)
-        self.df.rename(
-            columns={'机构名称': utils.depart_info_column_name}, inplace=True)
+            columns={'通行证': utils.code_info_column_name, '部门': utils.depart_info_column_name, '机构名称': utils.depart_info_column_name}, inplace=True)
 
         self.df.rename(columns=lambda x: get_column_name(
             self.name, x), inplace=True)
@@ -93,6 +89,7 @@ class SalaryGzs(SalaryBaseInfo):
     """
     工资信息
     """
+    name = '工资信息'
 
     def __init__(self, period, departs) -> None:
         super().__init__(period, departs)
@@ -105,6 +102,7 @@ class SalaryJjs(SalaryBaseInfo):
     """
     奖金信息
     """
+    name = '奖金信息'
 
     def __init__(self, period, departs) -> None:
         super().__init__(period, departs)
@@ -119,6 +117,7 @@ class SalaryBanks(SalaryBaseInfo):
     """
     银行卡信息
     """
+    name = '银行卡信息'
 
     def __init__(self, period, departs) -> None:
         super().__init__(period, departs)
@@ -134,7 +133,7 @@ class SalaryBanks(SalaryBaseInfo):
             self.name, "卡用途")].str.contains('工资卡') == True]
         jj_bank_df = self.df[(self.df[get_column_name(
             self.name, "卡用途")].str.contains('奖金卡')) == True]
-        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.tax_column_name, utils.depart_display_column_name], suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
+        return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
 
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -223,8 +222,8 @@ def load_data_to_frame():
     banks = SalaryBanks(period, departs=ds)
     jobs = SalaryPersonJobs(period, departs=ds)
     persons = SalaryPersons(period)
-    tax = SalaryTaxs(persons, ds.tax_departs())
-    return period, ds, gzs, jjs, banks, jobs, persons, tax
+    tax = SalaryTaxs(period, ds.tax_departs())
+    return gzs, jjs, banks, jobs, persons, tax
 
 
 def contact_info(gzs, jjs, banks, jobs, persons, tax):
@@ -236,6 +235,47 @@ def contact_info(gzs, jjs, banks, jobs, persons, tax):
     return df
 
 
+def validator(df):
+    """
+    验证本期数据
+    """
+    val_dict = {}
+    # writer = pd.ExcelWriter('效验结果.xlsx')
+    # 实发小于0
+    res = df[df[get_column_name(SalaryGzs.name, "实发")].notna(
+    ) & df[get_column_name(SalaryGzs.name, "实发")] < 0]
+    if not res.empty:
+        val_dict['工资实发小于0', res.copy()]
+    res = df[df[get_column_name(SalaryJjs.name, "实发")].notna(
+    ) & df[get_column_name(SalaryJjs.name, "实发")] < 0]
+    if not res.empty:
+        val_dict['奖金实发小于0', res.copy()]
+    res = df[(df[get_column_name(SalaryGzs.name, "应发")].notna()) & (df[get_column_name(
+        SalaryGzs.name, "应发")] > 0) & (df[get_column_name(SalaryBanks.name, "卡号", "工资卡")].isna())]
+    if not res.empty:
+        val_dict['缺少工资卡信息', res.copy()]
+    res = df[(df[get_column_name(SalaryJjs.name, "应发")].notna()) & (df[get_column_name(
+        SalaryJjs.name, "应发")] > 0) & (df[get_column_name(SalaryBanks.name, "卡号", "奖金卡")].isna())]
+    if not res.empty:
+        val_dict['缺少奖金卡信息', res.copy()]
+    # 所得税核对
+    res = df[df["所得税"] - df["累计应补(退)税额"] >= 0.01]
+    if not res.empty:
+        val_dict['个税错误信息', res.copy()]
+
+    # 缺少岗位工资
+    res = df[df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
+             '岗位绩效工资制' & df[get_column_name(SalaryGzs.name, "岗位工资")] == 0]
+    if not res.empty:
+        val_dict['岗位工资错误信息', res.copy()]
+    # 离岗休息实发未0验证
+    res = df[(df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
+              '生活费（2021年离岗休息）') & (df[get_column_name(SalaryGzs.name, "生活补贴")] == 0) & (df[get_column_name(SalaryGzs.name, "实发")] != 0)]
+    if not res.empty:
+        val_dict['自主创业错误信息', res.copy()]
+    return val_dict
+
+
 def merge_gz_and_jj(gz_infos, jj_infos):
     df = pd.merge(gz_infos.df, jj_infos.df, on=[
                   utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=['_工资', '_奖金'])
@@ -244,7 +284,7 @@ def merge_gz_and_jj(gz_infos, jj_infos):
     df[utils.shifa_column_name] = df[get_column_name(
         gz_infos.name, "实发")] + df[get_column_name(jj_infos.name, "实发")]
     df[utils.suodeshui_column_name] = 0 - (df[get_column_name(
-        gz_infos.name, "个调税")] + df[get_column_name(jj_infos.name, "个调税")])
+        gz_infos.name, "个调税")] + df[get_column_name(jj_infos.name, "个调税")] + df[get_column_name(jj_infos.name, "个税调整")])
     return df
 
 

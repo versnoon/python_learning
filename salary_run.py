@@ -15,7 +15,8 @@ import src.salarys.done as run
 
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
-    run.load_data()
+    print('start')
+    run.done()
     endtime = datetime.datetime.now()
     print(endtime - starttime)
     print('done')
