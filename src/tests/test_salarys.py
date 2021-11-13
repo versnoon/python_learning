@@ -131,3 +131,4 @@ class TestSalarys:
         s = s_infos.contact_tax_info(s, taxs)
         assert s["累计应补(退)税额"].any()
         assert s_infos.get_value(s, "", "M73677", "累计应补(退)税额") == 971.68
+        assert s["所得税"].isna().empty

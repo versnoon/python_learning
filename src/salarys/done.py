@@ -21,4 +21,6 @@ def done():
     df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax)
     # 验证数据
     errs = s_infos.validator(df)
+    if len(errs) > 0:
+        s_infos.export_errs(errs)
     # 输出

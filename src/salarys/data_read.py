@@ -50,9 +50,11 @@ def make_df_from_excel_files(
 
 
 def group_by_columns(df, group_by_columns=[]):
-    if len(group_by_columns) > 0:
-        df = df.groupby(group_by_columns, as_index=False)
-        df = df.aggregate(np.sum)
+
+    if not df.empty:
+        if len(group_by_columns) > 0:
+            df = df.groupby(group_by_columns, as_index=False)
+            df = df.aggregate(np.sum)
 
 
 def get_file_dir(file_root_path, period='', file_sub_path=[]):

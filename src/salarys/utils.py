@@ -34,6 +34,7 @@ person_id_column_name = '证件号码'
 yingfa_column_name = '应发合计'
 shifa_column_name = '实发合计'
 suodeshui_column_name = '所得税'
+jigou_column_name = '机构全路径'
 
 
 def root_dir_() -> str:
