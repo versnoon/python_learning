@@ -188,6 +188,8 @@ class SalaryTaxs(SalaryBaseInfo):
                     chunks.append(df)
             if len(chunks) > 0:
                 self.df = pd.concat(chunks, ignore_index=True)
+            else:
+                self.df = pd.DataFrame()
 
 
 def split_depart_infos(departs, no=0):
@@ -367,13 +369,11 @@ def contact_job_info(df, jobs):
 
 
 def contact_tax_info(df, tax):
-    if not tax.df:
-        return df
     if not tax.df.empty:
         tax_df = tax.df[[utils.person_id_column_name,
                          utils.tax_column_name, "累计应补(退)税额"]]
-        df[f'人员信息导出结果-证件号码_lower'] = df['人员信息导出结果-证件号码'].str.lower()
-        tax_df[f'{utils.person_id_column_name}_lower'] = tax_df[utils.person_id_column_name].str.lower()
+        df.loc[:, f'人员信息导出结果-证件号码_lower'] = df['人员信息导出结果-证件号码'].str.lower()
+        tax_df.loc[:, f'{utils.person_id_column_name}_lower'] = tax_df[utils.person_id_column_name].str.lower()
         s = pd.merge(df, tax_df, left_on=["人员信息导出结果-证件号码_lower", utils.tax_column_name], right_on=[
             f'{utils.person_id_column_name}_lower', utils.tax_column_name], how='outer')
         return s
