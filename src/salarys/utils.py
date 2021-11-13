@@ -40,3 +40,16 @@ jigou_column_name = '机构全路径'
 def root_dir_() -> str:
     path = os.path.join(root_dir, test_dir)
     return path
+
+
+def join_path(paths) -> str:
+    path = root_dir_()
+    for p in paths:
+        path = os.path.join(path, p)
+    return path
+
+
+def file_path(path, filename) -> str:
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return os.path.join(path, filename)

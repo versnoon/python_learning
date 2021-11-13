@@ -3,7 +3,7 @@
 '''
 @File    :   depart.py
 @Time    :   2021/10/26 09:00:29
-@Author  :   Tong tan 
+@Author  :   Tong tan
 @Version :   1.0
 @Contact :   tongtan@gmail.com
 '''
@@ -71,6 +71,9 @@ class Departs:
 
     def tax_departs(self):
         return self.df["税务机构"].drop_duplicates().to_list()
+
+    def depart_dispaly_names(self):
+        return self.df["EHR单位名称"].drop_duplicates().to_list()
 
     def display_depart_name(self, tax, depart_name):
         key = f"{tax}{utils.depart_sep}{depart_name}"

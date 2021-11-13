@@ -224,7 +224,7 @@ def load_data_to_frame():
     jobs = SalaryPersonJobs(period, departs=ds)
     persons = SalaryPersons(period)
     tax = SalaryTaxs(period, ds.tax_departs())
-    return gzs, jjs, banks, jobs, persons, tax
+    return period, ds, gzs, jjs, banks, jobs, persons, tax
 
 
 def contact_info(gzs, jjs, banks, jobs, persons, tax):
@@ -296,11 +296,41 @@ def validator(df):
     return val_dict
 
 
-def export_errs(errs):
-    writer = pd.ExcelWriter('效验结果.xlsx')
+def get_export_path(period, paths=[]):
+    ps = [period]
+    ps.extend(paths)
+    return utils.join_path(ps)
+
+
+def export_all_errs(period, errs):
+    file_dir = get_export_path(period, ['汇总数据'])
+    file_name = f"{period}_效验结果.xlsx"
+    writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
     for name, df in errs.items():
         df.to_excel(writer, name)
     writer.save()
+
+
+def export_errs_by_display_depart(period, errs, departs):
+    for depart in departs:
+        file_dir = get_export_path(period, [depart])
+        file_name = f"{period}_{depart}_效验结果.xlsx"
+
+        depart_err = split_by_display_depart(errs, depart)
+        if len(depart_err) > 0:
+            writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
+            for name, df in depart_err.items():
+                df.to_excel(writer, name)
+            writer.save()
+
+
+def split_by_display_depart(errs, depart):
+    res = {}
+    for name, df in errs.items():
+        depart_df = df[df[utils.depart_display_column_name] == depart]
+        if not depart_df.empty:
+            res[name] = depart_df
+    return res
 
 
 def merge_gz_and_jj(gz_infos, jj_infos):
