@@ -149,6 +149,8 @@ class SalaryPersons(SalaryBaseInfo):
         super().__init__(period)
         self.name = '人员信息导出结果'
         super().get_infos()
+        self.df.drop_duplicates(get_column_name(
+            self.name, utils.code_info_column_name), inplace=True)
 
 
 class SalaryPersonJobs(SalaryBaseInfo):
@@ -267,7 +269,8 @@ def validator(df):
     if "所得税" in df.columns and "累计应补(退)税额" in df.columns:
         res = df[df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(0) != 0]
         res = res.copy()
-        res.loc[:, "备注"] = df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
+        res.loc[:, "个税调整_值"] = 0 - \
+            df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
         if not res.empty:
             val_dict['个税错误信息'] = res.copy()
 
@@ -351,9 +354,12 @@ def append_yingf_shif_shui(df):
         SalaryGzs.name, "应发")].add(df[get_column_name(SalaryJjs.name, "应发")], fill_value=0)
     df[utils.shifa_column_name] = df[get_column_name(
         SalaryGzs.name, "实发")] .add(df[get_column_name(SalaryJjs.name, "实发")], fill_value=0)
-
-    df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
-        SalaryGzs.name, "个调税"), get_column_name(SalaryJjs.name, "个调税"), get_column_name(SalaryJjs.name, "个税调整")]].sum(axis=1))
+    if get_column_name(SalaryJjs.name, "个税调整") in df.columns:
+        df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
+            SalaryGzs.name, "个调税"), get_column_name(SalaryJjs.name, "个调税"), get_column_name(SalaryJjs.name, "个税调整")]].sum(axis=1))
+    else:
+        df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
+            SalaryGzs.name, "个调税"), get_column_name(SalaryJjs.name, "个调税")]].sum(axis=1))
     return df
 
 
@@ -456,7 +462,6 @@ def to_sap_frame(df):
     """
     sap_df = pd.DataFrame()
     # 添加缺失项目
-    df['机构'] = list(map(lambda x: x[1] if pd.isna(x[0]) else x[0],
-                        df[['工资信息-机构', '奖金信息-机构']].values))
     sap_df["实发核对"] = 0
+    sap_df["一级组织"]
     pass

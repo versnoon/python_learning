@@ -24,7 +24,7 @@ def make_df_from_excel_files(
     file_sub_path=[],
     file_name_prefix='',
     file_exts=['.xls', '.xlsx'],
-    converters={}
+    converters={},
 ):
     chunks = []
     err_paths = []
