@@ -9,8 +9,6 @@
 '''
 
 
-from os import error
-from numpy import e
 import src.salarys.utils as utils
 import src.salarys.data_read as prx
 
@@ -45,6 +43,12 @@ class Period:
 
     def get_period_info(self) -> str:
         return self.__str__()
+
+    def get_pre_period_info(self) -> str:
+        if self.month != 1:
+            return "{:0>4d}{:0>2d}".format(int(self.year), int(self.month-1))
+        else:
+            return "{:0>4d}{:0>2d}".format(int(self.year - 1), 12)
 
     def __str__(self) -> str:
         return "{:0>4d}{:0>2d}".format(int(self.year), int(self.month))

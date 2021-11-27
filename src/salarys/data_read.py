@@ -53,8 +53,8 @@ def group_by_columns(df, group_by_columns=[]):
 
     if not df.empty:
         if len(group_by_columns) > 0:
-            df = df.groupby(group_by_columns, as_index=False)
-            df = df.aggregate(np.sum)
+            return df.groupby(group_by_columns, as_index=False).aggregate(np.sum)
+    return df
 
 
 def get_file_dir(file_root_path, period='', file_sub_path=[]):

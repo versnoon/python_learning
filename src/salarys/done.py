@@ -16,6 +16,7 @@ import pandas as pd
 def done():
     # 加载数据
     period, departs, gzs, jjs, banks, jobs, persons, tax = s_infos.load_data_to_frame()
+
     # 合并数据
     # banks.df.to_excel('bank.xlsx')
     df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax)
@@ -28,5 +29,6 @@ def done():
         s_infos.export_errs_by_display_depart(
             period, errs, departs.depart_dispaly_names())
     # 输出各类数据
-    else:
-        s_infos.export(gzs, jjs, df)
+    # else:
+    #     s_infos.export(gzs, jjs, df)
+    # s_infos.to_sap_frame(df)

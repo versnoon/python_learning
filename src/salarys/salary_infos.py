@@ -10,7 +10,6 @@
 
 
 import pandas as pd
-from pandas.core.frame import DataFrame
 import src.salarys.data_read as prx
 import src.salarys.utils as utils
 import src.salarys.period as period_op
@@ -79,7 +78,8 @@ class SalaryBaseInfo:
         self.append_tax_name_and_display_name()
         # 分组合计
         if len(self.group_by) > 0:
-            prx.group_by_columns(self.df, self.get_group_by_columns_info())
+            self.df = prx.group_by_columns(
+                self.df, self.get_group_by_columns_info())
 
 
 class SalaryGzs(SalaryBaseInfo):
@@ -105,8 +105,8 @@ class SalaryJjs(SalaryBaseInfo):
         super().__init__(period, departs)
         self.name = '奖金信息'
         self.file_sub_dir = [utils.gz_jj_dir]
-        self.group_by = [utils.tax_column_name,
-                         utils.depart_column_name, utils.code_info_column_name]
+        self.group_by = [utils.tax_column_name, get_column_name(self.name, utils.name_info_column_name), get_column_name(self.name, utils.depart_info_column_name),
+                         utils.depart_display_column_name, utils.code_info_column_name]
         super().get_infos()
 
 
@@ -127,11 +127,17 @@ class SalaryBanks(SalaryBaseInfo):
 
     def split_by_bank_purpose(self):
         if not self.df.empty:
-            gz_bank_df = self.df[self.df[get_column_name(
-                self.name, "卡用途")].str.contains('工资卡') == True]
-            jj_bank_df = self.df[(self.df[get_column_name(
-                self.name, "卡用途")].str.contains('奖金卡')) == True]
-            return pd.merge(gz_bank_df, jj_bank_df, on=[get_column_name(self.name, utils.code_info_column_name), utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
+            gz_bank_df = self.df[(self.df[get_column_name(
+                self.name, "卡用途")].str.contains('工资卡') == True) & (self.df[get_column_name(
+                    self.name, "卡号")].notna())]
+            gz_bank_df.drop_duplicates(
+                subset=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], inplace=True)
+            jj_bank_df = self.df[((self.df[get_column_name(
+                self.name, "卡用途")].str.contains('奖金卡')) == True) & (self.df[get_column_name(
+                    self.name, "卡号")].notna())]
+            jj_bank_df.drop_duplicates(
+                subset=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], inplace=True)
+            return pd.merge(gz_bank_df, jj_bank_df, on=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
         return pd.DataFrame()
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -157,6 +163,7 @@ class SalaryPersonJobs(SalaryBaseInfo):
     """
     发薪人员岗位信息
     """
+    name = '岗位聘用信息'
 
     def __init__(self, period, departs) -> None:
         super().__init__(period, departs)
@@ -267,7 +274,7 @@ def validator(df):
             val_dict['缺少奖金卡信息'] = res.copy()
     # 所得税核对
     if "所得税" in df.columns and "累计应补(退)税额" in df.columns:
-        res = df[df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(0) != 0]
+        res = df[df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2) != 0]
         res = res.copy()
         res.loc[:, "个税调整_值"] = 0 - \
             df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
@@ -344,12 +351,11 @@ def merge_gz_and_jj(gz_infos, jj_infos):
         return df
     elif not gz_infos.df.empty and jj_infos.df.empty:
         return gz_infos.df
-    elif gz_infos.df.emtpy and not jj_infos.df.empty:
+    elif gz_infos.df.empty and not jj_infos.df.empty:
         return jj_infos.df
 
 
 def append_yingf_shif_shui(df):
-
     df[utils.yingfa_column_name] = df[get_column_name(
         SalaryGzs.name, "应发")].add(df[get_column_name(SalaryJjs.name, "应发")], fill_value=0)
     df[utils.shifa_column_name] = df[get_column_name(
@@ -360,6 +366,10 @@ def append_yingf_shif_shui(df):
     else:
         df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
             SalaryGzs.name, "个调税"), get_column_name(SalaryJjs.name, "个调税")]].sum(axis=1))
+    df.loc[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.depart_info_column_name)
+           ] = df[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.depart_info_column_name)]
+    df.loc[df[get_column_name(SalaryGzs.name, utils.name_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.name_info_column_name)] = df[df[get_column_name(
+        SalaryGzs.name, utils.name_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.name_info_column_name)]
     return df
 
 
@@ -372,8 +382,7 @@ def contact_id_info(df, persons):
         persons.name, "人员类型"), get_column_name(
         persons.name, "在职状态"), get_column_name(
         persons.name, "参加工作时间")]]
-    s = pd.merge(df, id_df, on=[utils.code_info_column_name], how='left')
-    return s
+    return pd.merge(df, id_df, on=[utils.code_info_column_name], how='left')
 
 
 def contact_bank_info(df, banks):
@@ -385,21 +394,19 @@ def contact_bank_info(df, banks):
             banks.name, "卡号", "工资卡"), get_column_name(
             banks.name, "金融机构", "奖金卡"), get_column_name(
             banks.name, "卡号", "奖金卡")]]
-        s = pd.merge(df, bank_df, on=[
+        return pd.merge(df, bank_df, on=[
             utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='left')
-        return s
 
 
 def contact_job_info(df, jobs):
-    if jobs.df.empty:
+    if not jobs.df.empty:
         job_df = jobs.df[[utils.code_info_column_name,  utils.tax_column_name, utils.depart_display_column_name, get_column_name(
             jobs.name, "岗位类型"), get_column_name(
             jobs.name, "执行岗位名称"), get_column_name(
             jobs.name, "岗位层级"), get_column_name(
             jobs.name, "组合(岗位序列+标准目录+岗位层级)")]]
-        s = pd.merge(df, job_df, on=[
+        return pd.merge(df, job_df, on=[
             utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='left')
-        return s
     else:
         return df
 
@@ -410,9 +417,8 @@ def contact_tax_info(df, tax):
                          utils.tax_column_name, "累计应补(退)税额"]]
         df.loc[:, f'人员信息导出结果-证件号码_lower'] = df['人员信息导出结果-证件号码'].str.lower()
         tax_df.loc[:, f'{utils.person_id_column_name}_lower'] = tax_df[utils.person_id_column_name].str.lower()
-        s = pd.merge(df, tax_df, left_on=["人员信息导出结果-证件号码_lower", utils.tax_column_name], right_on=[
+        return pd.merge(df, tax_df, left_on=["人员信息导出结果-证件号码_lower", utils.tax_column_name], right_on=[
             f'{utils.person_id_column_name}_lower', utils.tax_column_name], how='outer')
-        return s
     else:
         return df
 
@@ -462,6 +468,45 @@ def to_sap_frame(df):
     """
     sap_df = pd.DataFrame()
     # 添加缺失项目
-    sap_df["实发核对"] = 0
-    sap_df["一级组织"]
-    pass
+    sap_df["实发核对"] = "0"
+    depart_df = df[get_column_name(
+        SalaryGzs.name, utils.depart_info_column_name)].str.split(r"\\", expand=True)
+    sap_df["一级机构"] = depart_df[0]
+    sap_df["二级机构"] = depart_df[1]
+    sap_df["三级机构"] = depart_df[2]
+    sap_df["四级机构"] = depart_df[3]
+    sap_df["五级机构"] = depart_df[4]
+    sap_df["员工编号"] = df[utils.code_info_column_name]
+    sap_df["员工姓名"] = df[get_column_name(SalaryGzs.name, "员工姓名")]
+    sap_df["身份证"] = df[utils.person_id_column_name]
+    sap_df["工资范围"] = df[utils.depart_display_column_name]
+    sap_df["人事范围"] = depart_df[1]
+    sap_df["员工组"] = df[get_column_name(SalaryPersons.name, "人员类型")]
+    sap_df["员工子组"] = df[get_column_name(SalaryPersons.name, "在职状态")]
+    sap_df["职位"] = df[get_column_name(
+        SalaryPersonJobs.name, "组合(岗位序列+标准目录+岗位层级)")]
+    sap_df["职族"] = df[get_column_name(
+        SalaryPersonJobs.name, "岗位类型")]
+    sap_df["岗位工资"] = df[get_column_name(SalaryGzs.name, "岗位工资")]
+    sap_df["保留工资"] = df[get_column_name(SalaryGzs.name, "保留工资")]
+    sap_df["年功工资"] = df[get_column_name(SalaryGzs.name, "工龄工资")]
+    sap_df["辅助工资"] = df[get_column_name(SalaryGzs.name, "其他保留工资")]
+    sap_df["生活补助"] = df[get_column_name(SalaryGzs.name, "生活补贴")]
+    sap_df["考核工资"] = 0
+    sap_df["工资补退"] = df[get_column_name(SalaryGzs.name, "工资调整")]
+    sap_df["其他工资"] = df[get_column_name(SalaryGzs.name, "生活费")]
+    sap_df["内退基本工资"] = df[get_column_name(SalaryGzs.name, "固定工资")]
+    sap_df["内退增资"] = df[get_column_name(SalaryGzs.name, "待退休工资")]
+    # 并入年功工资 通过薪酬模式区分
+    sap_df["内退工龄工资"] = 0
+    sap_df["代缴三金"] = df[get_column_name(SalaryGzs.name, "生活费补差")]
+    sap_df["物价补贴"] = df[get_column_name(SalaryGzs.name, "水电气暖物业补贴")]
+    sap_df["夜班津贴"] = df[get_column_name(SalaryGzs.name, "中夜班津贴")]
+    sap_df["技师津贴"] = df[get_column_name(SalaryGzs.name, "技能津贴")]
+    sap_df["一专多能工津贴"] = df[get_column_name(SalaryGzs.name, "兼岗工资")]
+    sap_df["矿山津贴"] = 0
+    sap_df["下井津贴"] = 0
+    sap_df["教、护龄津贴"] = df[get_column_name(SalaryGzs.name, "驻外津贴")]
+# 代缴三金	物价补贴	夜班津贴	技师津贴	一专多能工津贴	矿山津贴	下井津贴	教、护龄津贴	护士长津贴
+
+    sap_df.to_excel('xxxx.xlsx')
