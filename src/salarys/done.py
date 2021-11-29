@@ -31,4 +31,4 @@ def done():
     # 输出各类数据
     # else:
     #     s_infos.export(gzs, jjs, df)
-    # s_infos.to_sap_frame(df)
+    s_infos.to_sap_frame(df)

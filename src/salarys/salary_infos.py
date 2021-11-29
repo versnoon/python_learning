@@ -468,7 +468,7 @@ def to_sap_frame(df):
     """
     sap_df = pd.DataFrame()
     # 添加缺失项目
-    sap_df["实发核对"] = "0"
+    sap_df["实发核对"] = pd.NA
     depart_df = df[get_column_name(
         SalaryGzs.name, utils.depart_info_column_name)].str.split(r"\\", expand=True)
     sap_df["一级机构"] = depart_df[0]
@@ -476,37 +476,209 @@ def to_sap_frame(df):
     sap_df["三级机构"] = depart_df[2]
     sap_df["四级机构"] = depart_df[3]
     sap_df["五级机构"] = depart_df[4]
-    sap_df["员工编号"] = df[utils.code_info_column_name]
-    sap_df["员工姓名"] = df[get_column_name(SalaryGzs.name, "员工姓名")]
-    sap_df["身份证"] = df[utils.person_id_column_name]
-    sap_df["工资范围"] = df[utils.depart_display_column_name]
+    sap_df["员工编号"] = get_df_values(df, utils.code_info_column_name)
+    sap_df["员工姓名"] = get_df_values(df, get_column_name(SalaryGzs.name, "员工姓名"))
+    sap_df["身份证"] = get_df_values(df, utils.person_id_column_name)
+    sap_df["工资范围"] = get_df_values(df, utils.depart_display_column_name)
     sap_df["人事范围"] = depart_df[1]
-    sap_df["员工组"] = df[get_column_name(SalaryPersons.name, "人员类型")]
-    sap_df["员工子组"] = df[get_column_name(SalaryPersons.name, "在职状态")]
-    sap_df["职位"] = df[get_column_name(
-        SalaryPersonJobs.name, "组合(岗位序列+标准目录+岗位层级)")]
-    sap_df["职族"] = df[get_column_name(
-        SalaryPersonJobs.name, "岗位类型")]
-    sap_df["岗位工资"] = df[get_column_name(SalaryGzs.name, "岗位工资")]
-    sap_df["保留工资"] = df[get_column_name(SalaryGzs.name, "保留工资")]
-    sap_df["年功工资"] = df[get_column_name(SalaryGzs.name, "工龄工资")]
-    sap_df["辅助工资"] = df[get_column_name(SalaryGzs.name, "其他保留工资")]
-    sap_df["生活补助"] = df[get_column_name(SalaryGzs.name, "生活补贴")]
-    sap_df["考核工资"] = 0
-    sap_df["工资补退"] = df[get_column_name(SalaryGzs.name, "工资调整")]
-    sap_df["其他工资"] = df[get_column_name(SalaryGzs.name, "生活费")]
-    sap_df["内退基本工资"] = df[get_column_name(SalaryGzs.name, "固定工资")]
-    sap_df["内退增资"] = df[get_column_name(SalaryGzs.name, "待退休工资")]
+    sap_df["员工组"] = get_df_values(
+        df, get_column_name(SalaryPersons.name, "人员类型"))
+    sap_df["员工子组"] = get_df_values(
+        df, get_column_name(SalaryPersons.name, "在职状态"))
+    sap_df["职位"] = get_df_values(df, get_column_name(
+        SalaryPersonJobs.name, "组合(岗位序列+标准目录+岗位层级)"))
+    sap_df["职族"] = get_df_values(df, get_column_name(
+        SalaryPersonJobs.name, "岗位类型"))
+    sap_df["岗位工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "岗位工资"))
+    sap_df["保留工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "保留工资"))
+    sap_df["年功工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "工龄工资"))
+    sap_df["辅助工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "其他保留工资"))
+    sap_df["生活补助"] = get_df_values(df, get_column_name(SalaryGzs.name, "生活补贴"))
+    sap_df["考核工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "考核浮动"))
+    sap_df["工资补退"] = get_df_values(df, get_column_name(SalaryGzs.name, "工资调整"))
+    sap_df["其他工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "生活费"))
+    sap_df["内退基本工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "固定工资"))
+    sap_df["内退增资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "待退休工资"))
     # 并入年功工资 通过薪酬模式区分
-    sap_df["内退工龄工资"] = 0
-    sap_df["代缴三金"] = df[get_column_name(SalaryGzs.name, "生活费补差")]
-    sap_df["物价补贴"] = df[get_column_name(SalaryGzs.name, "水电气暖物业补贴")]
-    sap_df["夜班津贴"] = df[get_column_name(SalaryGzs.name, "中夜班津贴")]
-    sap_df["技师津贴"] = df[get_column_name(SalaryGzs.name, "技能津贴")]
-    sap_df["一专多能工津贴"] = df[get_column_name(SalaryGzs.name, "兼岗工资")]
-    sap_df["矿山津贴"] = 0
-    sap_df["下井津贴"] = 0
-    sap_df["教、护龄津贴"] = df[get_column_name(SalaryGzs.name, "驻外津贴")]
-# 代缴三金	物价补贴	夜班津贴	技师津贴	一专多能工津贴	矿山津贴	下井津贴	教、护龄津贴	护士长津贴
+    sap_df["内退工龄工资"] = pd.NA
+    sap_df["代缴三金"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "生活费补差"))
+    sap_df["物价补贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "水电气暖物业补贴"))
+    sap_df["夜班津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "中夜班津贴"))
+    sap_df["技师津贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "技能津贴"))
+    sap_df["一专多能工津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "兼岗工资"))
+    sap_df["矿山津贴"] = pd.NA
+    sap_df["下井津贴"] = pd.NA
+    sap_df["教、护龄津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "驻外津贴"))
+    sap_df["护士长津贴"] = pd.NA
+    sap_df["外语津贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "学历津贴"))
+    sap_df["班组长津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "班组长津贴"))
+    sap_df["科技津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "科技优秀津贴"))
+    sap_df["能手津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "操作能手津贴"))
+    sap_df["基本奖金"] = get_df_values(df, get_column_name(SalaryJjs.name, "基本奖金"))
+    sap_df["单项奖1"] = get_df_values(df, get_column_name(SalaryJjs.name, "单项奖1"))
+    sap_df["单项奖2"] = get_df_values(df, get_column_name(SalaryJjs.name, "单项奖2"))
+    sap_df["单项奖3"] = get_df_values(df, get_column_name(SalaryJjs.name, "单项奖3"))
+    sap_df["法定节日加班工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "法定假日加班工资"))
+    sap_df["公休日加班工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "休息日加班工资"))
+    sap_df["平时加班工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "平常加班工资"))
+    sap_df["缺勤扣款合计"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "缺勤扣款单元"))
+    sap_df["公积金"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "公积金个人额度"))
+    sap_df["养老保险"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "养老保险个人额度"))
+    sap_df["医疗保险缴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "医疗保险个人额度"))
+    sap_df["失业保险"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "失业保险个人额度"))
+    sap_df["养老保险补缴"] = pd.NA
+    sap_df["医疗保险补缴"] = pd.NA
+    sap_df["失业保险补缴"] = pd.NA
+    sap_df["年金"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "企业年金个人额度"))
+    sap_df["工资税收"] = get_df_values(df, get_column_name(SalaryGzs.name, "所得税"))
+    sap_df["水利基金"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "其他代扣款"))
+    sap_df["财务扣款"] = get_df_values(df, get_column_name(SalaryGzs.name, "其他扣款"))
+    sap_df["电费"] = pd.NA
+    sap_df["房租"] = pd.NA
+    sap_df["收视费"] = pd.NA
+    sap_df["清洁费"] = pd.NA
+    sap_df["乘车费用"] = pd.NA
+    sap_df["财务补退"] = get_df_values(df, get_column_name(
+        SalaryJjs.name, "其它补发")) + get_df_values(df, get_column_name(SalaryGzs.name, "补发一"))
+    sap_df["物业补贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "水电气暖物业补贴"))
+    sap_df["保健费"] = get_df_values(df, get_column_name(SalaryGzs.name, "出勤津贴"))
+    sap_df["独补"] = get_df_values(df, get_column_name(SalaryGzs.name, "独生子女费"))
+    sap_df["通讯费"] = get_df_values(df, get_column_name(SalaryGzs.name, "通讯补贴"))
+    sap_df["防暑降温"] = get_df_values(df, get_column_name(SalaryGzs.name, "高温津贴"))
+    sap_df["回民"] = get_df_values(df, get_column_name(SalaryGzs.name, "民族津贴"))
+    sap_df["纪检津贴"] = pd.NA
+    sap_df["计生津贴"] = pd.NA
+    sap_df["误餐补贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "误餐补助"))
+    sap_df["信访津贴"] = pd.NA
+    sap_df["伤残津贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "工伤津贴"))
+    sap_df["职务补贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "公务车贴"))
+    sap_df["科研项目津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "特殊贡献津贴"))
+    sap_df["技术攻关津贴"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "技术津贴"))
+    sap_df["非工资性津贴补发"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "各项补贴"))
+    sap_df["工资应发"] = get_df_values(df, utils.yingfa_column_name)
+    sap_df["实发工资"] = get_df_values(df, utils.shifa_column_name)
+    sap_df["教育经费"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "兼课带教费"))
+    sap_df["工程津贴"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "工程津贴"))
+    sap_df["技术输出"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "技术输出"))
+    sap_df["其他"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "争取国家政策奖"))
+    sap_df["公司效益奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "公司效益奖"))
+    sap_df["上卡效益奖"] = pd.NA
+    sap_df["效益奖所得税"] = pd.NA
+    sap_df["年底兑现奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "年底兑现奖"))
+    sap_df["年终奖实发"] = pd.NA
+    sap_df["年终奖所得税"] = pd.NA
+    sap_df["计税奖金"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "计税奖金"))
+    sap_df["预支年薪"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "月固定薪资"))+get_df_values(
+        df, get_column_name(SalaryGzs.name, "绩效工资"))+get_df_values(
+        df, get_column_name(SalaryGzs.name, "预发绩效年薪"))
+    sap_df["执业工资"] = pd.NA
 
-    sap_df.to_excel('xxxx.xlsx')
+    sap_df["上卡工资"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "实发"))
+    sap_df["上卡年终奖"] = pd.NA
+    sap_df["上卡基本奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "实发"))
+    sap_df["银行卡1"] = get_df_values(
+        df, get_column_name(SalaryBanks.name, "卡号", "工资卡"))
+    sap_df["银行1"] = get_df_values(
+        df, get_column_name(SalaryBanks.name, "金融机构", "工资卡"))
+    sap_df["银行卡2"] = get_df_values(
+        df, get_column_name(SalaryBanks.name, "卡号", "奖金卡"))
+    sap_df["银行2"] = get_df_values(
+        df, get_column_name(SalaryBanks.name, "金融机构", "奖金卡"))
+    sap_df["子女教育"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "累计子女教育支出"))
+    sap_df["继续教育"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "累计继续教育支出"))
+    sap_df["住房贷款利息"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "累计住房贷款利息支出"))
+    sap_df["住房租金"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "累计住房租金支出"))
+    sap_df["赡养老人"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "累计赡养老人支出"))
+    sap_df["马钢工龄"] = pd.NA
+    sap_df["工龄"] = get_df_values(
+        df, get_column_name(SalaryPersons.name, "参加工作时间"))
+    sap_df["财务代发计税项"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "其它纳税收入"))
+    sap_df["财务代发非计税项"] = pd.NA
+    sap_df["累计应发"] = pd.NA
+    sap_df["累计五险两金"] = pd.NA
+    sap_df["累计其他计税"] = pd.NA
+    sap_df["累计标准免税额"] = pd.NA
+    sap_df["累计个税"] = pd.NA
+    sap_df["司法扣款"] = get_df_values(
+        df, get_column_name(SalaryGzs.name, "司法扣款"))
+    sap_df["重点工作专项奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "重点工作专项奖"))
+    sap_df["荣誉类奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "荣誉类奖"))
+    sap_df["员工精益改善奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "员工精益改善奖"))
+    sap_df["宝武集团单列奖励"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "宝武集团单列奖励"))
+    sap_df["劳动竞赛奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "劳动竞赛奖"))
+    sap_df["安全绩效奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "安全绩效奖"))
+    sap_df["考核扣减"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "考核扣减"))
+    sap_df["绩效薪预支"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "绩效薪预支"))
+    sap_df["绩效薪结算"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "绩效薪结算"))
+    sap_df["科技奖励"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "科技奖励"))
+    sap_df["外派人员履职待遇"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "外派人员履职待遇"))
+    # 护士长津贴	外语津贴	班组长津贴	科技津贴	能手津贴	基本奖金	单项奖1	单项奖2	单项奖3	法定节日加班工资	公休日加班工资	平时加班工资
+    # 缺勤扣款合计	公积金	养老保险	医疗保险缴	失业保险
+    # 养老保险补缴	医疗保险补缴	失业保险补缴	年金	工资税收	水利基金	财务扣款
+    # 电费	房租	收视费	清洁费	乘车费用	财务补退	物业补贴	保健费	独补	通讯费
+    # 防暑降温	回民	纪检津贴	计生津贴	误餐补贴	矿山荣誉金	信访津贴	伤残津贴
+    # 职务补贴	科研项目津贴	技术攻关津贴	非工资性津贴补发	工资应发	实发工资
+# 教育经费	工程津贴	技术输出	其他	公司效益奖	上卡效益奖	效益奖所得税	年底兑现奖	年终奖实发	年终奖所得税	计税奖金	预支年薪	执业工资	上卡工资	上卡年终奖	上卡基本奖
+# 银行卡1	银行1	银行卡2	银行2	子女教育	继续教育	住房贷款利息	住房租金	赡养老人	马钢工龄	工龄	财务代发计税项	财务代发非计税项	累计应发	累计五险两金	累计其他计税	累计标准免税额	累计个税
+# 司法扣款	重点工作专项奖	荣誉类奖	员工精益改善奖	宝武集团单列奖励	劳动竞赛奖	安全绩效奖
+# 考核扣减	绩效薪预支	绩效薪结算	科技奖励	外派人员履职待遇
+    return sap_df
+
+
+def get_df_values(df, name):
+    v = pd.NA
+    if name in df.columns:
+        v = df[name]
+    return v
