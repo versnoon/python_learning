@@ -11,8 +11,10 @@ import os
 import shutil
 import pandas as pd
 
-from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix
+from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name
 from src.salarys.period import Period
+from src.salarys.depart import Departs
+from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info
 
 
 def init():
@@ -27,7 +29,7 @@ def init():
     init_folder_if_not_exists(period=period, folder_name=result_dir)
     copy_depart_file_if_not_exists(p)
     clear(p)
-    rename_to_standard(p)
+    # rename_to_standard(p)
 
 
 def clear(period):
@@ -112,3 +114,58 @@ def copy_depart_file_if_not_exists(p: Period):
 
 def load_period():
     return Period()
+
+
+def load_depart(period):
+    return Departs(period)
+
+
+def load_person_info(period):
+    return BwSalaryPersons(period)
+
+
+def load_data():
+    p = load_period()
+    period = p.get_period_info()
+    departs = load_depart(period=period)
+    persons = load_person_info(period=period)
+    gzs = SalaryGzs(period, departs)
+    jjs = SalaryJjs(period, departs)
+    banks = SalaryBanks(period, departs)
+    tax = SalaryTaxs(period, departs.tax_departs())
+    return p, departs, persons, gzs, jjs, banks, tax
+
+
+def contact_info(gzs, jjs, banks=None, persons=None, tax=None):
+    df = merge_gz_and_jj(gzs, jjs)
+    df = contact_bw_person_info(df, persons)
+    df = contact_bank_info(df, banks)
+    df = contact_tax_info(df, tax)
+    return df
+
+
+def contact_bw_person_info(df, persons):
+    if persons.df.empty:
+        return df
+    id_df = persons.df[[code_info_column_name, tax_column_name, get_column_name(
+        persons.name, person_id_column_name), get_column_name(
+        persons.name, "手机号码"), get_column_name(
+        persons.name, "人员类型"), get_column_name(
+        persons.name, "在职状态"), get_column_name(
+        persons.name, "聘用形式"), get_column_name(
+        persons.name, "岗位"), get_column_name(
+        persons.name, "标准岗位层级"), get_column_name(
+        persons.name, "岗位族群（主）")]]
+    return pd.merge(df, id_df, on=[code_info_column_name, tax_column_name], how='left')
+
+
+class BwSalaryPersons(SalaryBaseInfo):
+    """
+    发薪人员信息
+    """
+    name = '人员信息导出结果'
+
+    def __init__(self, period) -> None:
+        super().__init__(period)
+        self.name = '人员信息导出结果'
+        super().get_infos()
