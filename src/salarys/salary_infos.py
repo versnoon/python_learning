@@ -293,11 +293,13 @@ def validator_bank_info(df):
         res = df[(df[get_column_name(SalaryGzs.name, "实发")].notna(
         )) & (df[get_column_name(SalaryGzs.name, "实发")] < 0)]
         if not res.empty:
+            res = export_columns(res)
             val_dict['工资实发小于0'] = res.copy()
     if get_column_name(SalaryJjs.name, "实发") in df.columns:
         res = df[(df[get_column_name(SalaryJjs.name, "实发")].notna(
         )) & (df[get_column_name(SalaryJjs.name, "实发")] < 0)]
         if not res.empty:
+            res = export_columns(res)
             val_dict['奖金实发小于0'] = res.copy()
     return val_dict
 
@@ -313,6 +315,7 @@ def validator_sf_info(df):
         res = df[(df[get_column_name(SalaryJjs.name, "实发")].notna()) & (df[get_column_name(
             SalaryJjs.name, "实发")] > 0) & (df[get_column_name(SalaryBanks.name, "卡号", "奖金卡")].isna())]
         if not res.empty:
+            res = export_columns(res)
             val_dict['缺少奖金卡信息'] = res.copy()
     return val_dict
 
@@ -321,10 +324,11 @@ def validator_tax_info(df):
     val_dict = {}
     if "所得税" in df.columns and "累计应补(退)税额" in df.columns:
         res = df[df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2) != 0]
-        res = res.copy()
-        res.loc[:, "个税调整_值"] = 0 - \
-            df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
         if not res.empty:
+            res = res.copy()
+            res = export_columns(res)
+            res.loc[:, "个税调整_值"] = 0 - \
+                df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
             val_dict['个税错误信息'] = res.copy()
     return val_dict
 
@@ -335,6 +339,7 @@ def validator_id_info(df):
         res = df[(df[utils.yingfa_column_name] > 0) & (
             df[get_column_name(SalaryPersons.name, utils.person_id_column_name)].isna())]
         if not res.empty:
+            res = export_columns(res)
             val_dict['身份证错误信息'] = res.copy()
     return val_dict
 
@@ -356,6 +361,7 @@ def validator_other(df):
         res = df[(df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
                   '总部直管领导年薪制') & ((df[get_column_name(SalaryGzs.name, "工龄工资")].notna()) | (df[get_column_name(SalaryGzs.name, "岗位工资")].notna()))]
         if not res.empty:
+            res = export_columns(res)
             val_dict['经营层薪酬错误信息'] = res.copy()
     return val_dict
 
@@ -387,6 +393,11 @@ def validator(df):
     if len(other_v) > 0:
         val_dict = {**val_dict, **other_v}
     return val_dict
+
+
+def export_columns(df):
+    # 编码 姓名
+    return df[[utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), utils.depart_display_column_name, get_column_name(SalaryGzs.name, utils.depart_info_column_name)]]
 
 
 def get_export_path(period, paths=[]):
