@@ -11,10 +11,10 @@ import os
 import shutil
 import pandas as pd
 
-from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name
+from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name, depart_display_column_name
 from src.salarys.period import Period
 from src.salarys.depart import Departs
-from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info
+from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, SalaryGjj, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info
 
 
 def init():
@@ -133,14 +133,17 @@ def load_data():
     jjs = SalaryJjs(period, departs)
     banks = SalaryBanks(period, departs)
     tax = SalaryTaxs(period, departs.tax_departs())
-    return p, departs, persons, gzs, jjs, banks, tax
+    gjjs = SalaryGjj(period, departs)
+    return p, departs, persons, gzs, jjs, banks, tax, gjjs
 
 
-def contact_info(gzs, jjs, banks=None, persons=None, tax=None):
+def contact_info(gzs, jjs, banks=None, persons=None, tax=None, gjjs=None, departs=None):
     df = merge_gz_and_jj(gzs, jjs)
     df = contact_bw_person_info(df, persons)
     df = contact_bank_info(df, banks)
     df = contact_tax_info(df, tax)
+    df = contact_gjj_info(df, gjjs)
+    df = contact_gjj_validate(df, departs)
     return df
 
 
@@ -157,6 +160,21 @@ def contact_bw_person_info(df, persons):
         persons.name, "标准岗位层级"), get_column_name(
         persons.name, "岗位族群（主）")]]
     return pd.merge(df, id_df, on=[code_info_column_name, tax_column_name], how='left')
+
+
+def contact_gjj_info(df, gjjs):
+    if gjjs.df.empty:
+        return df
+    gjj_column = get_column_name(SalaryGjj.name, '公积金方案')
+    gjj_df = gjjs.df[[code_info_column_name, tax_column_name, gjj_column]]
+    return pd.merge(df, gjj_df, on=[
+        code_info_column_name, tax_column_name], how='left')
+
+
+def contact_gjj_validate(df, departs):
+    df['公积金验证'] = df.apply(lambda x: departs.get_gjj_fangan(
+        x[tax_column_name], x[get_column_name(SalaryGjj.name, '公积金方案')], x[depart_display_column_name]), axis=1)
+    return df.copy()
 
 
 class BwSalaryPersons(SalaryBaseInfo):

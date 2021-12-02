@@ -95,3 +95,12 @@ class Departs:
             for h_name in his_names:
                 r[f"{h_name}"] = display_name
         return r
+
+    def get_gjj_fangan(self, tax_depart, gjj_type, display_depart):
+        if not pd.isna(gjj_type):
+            departs_list = self.df[self.df["公积金中心"] ==
+                                   gjj_type]['SAP单位名称'].drop_duplicates().to_list()
+            if tax_depart == '马鞍山钢铁股份有限公司（总部）':
+                if not display_depart in departs_list:
+                    return 'ERR'
+        return 'OK'

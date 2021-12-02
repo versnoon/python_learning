@@ -243,6 +243,19 @@ class SalaryTaxs(SalaryBaseInfo):
                 self.df = pd.DataFrame()
 
 
+class SalaryGjj(SalaryBaseInfo):
+    """
+    发薪人员公积金数据
+    """
+    name = '公积金信息'
+
+    def __init__(self, period, departs) -> None:
+        super().__init__(period, departs)
+        self.file_sub_dir = [utils.insurance_dir]
+        self.name = '公积金信息'
+        super().get_infos()
+
+
 def split_depart_infos(departs, no=0):
     return list(map(lambda s: s.split(
         utils.depart_info_sep)[no], departs))
@@ -344,6 +357,13 @@ def validator_id_info(df):
     return val_dict
 
 
+def validator_gjj(df):
+    val_dict = {}
+    if get_column_name(SalaryGzs.name, "公积金方案") in df.columns:
+        df
+    return val_dict
+
+
 def validator_other(df):
     val_dict = {}
     if get_column_name(SalaryGzs.name, "薪酬模式") in df.columns and get_column_name(SalaryGzs.name, "岗位工资") in df.columns:
@@ -351,11 +371,13 @@ def validator_other(df):
         res = df[(df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
                   '岗位绩效工资制') & (df[get_column_name(SalaryGzs.name, "岗位工资")] == 0)]
         if not res.empty:
+            res = export_columns(res)
             val_dict['岗位工资错误信息'] = res.copy()
         # 离岗休息实发未0验证
         res = df[(df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
                   '生活费（2021年离岗休息）') & (df[get_column_name(SalaryGzs.name, "生活补贴")] == 0) & (df[get_column_name(SalaryGzs.name, "实发")] != 0)]
         if not res.empty:
+            res = export_columns(res)
             val_dict['自主创业错误信息'] = res.copy()
          # 只管领导验证，防止跨年年功工资计算出值
         res = df[(df[get_column_name(SalaryGzs.name, "薪酬模式")] ==
@@ -397,11 +419,11 @@ def validator(df):
 
 def export_columns(df):
     # 编码 姓名
-    return df[[utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), utils.depart_display_column_name, get_column_name(SalaryGzs.name, utils.depart_info_column_name)]]
+    return df[[utils.tax_column_name, utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), utils.depart_display_column_name, get_column_name(SalaryGzs.name, utils.depart_info_column_name)]]
 
 
-def get_export_path(period, paths=[]):
-    ps = [period]
+def get_export_path(period,  paths=[]):
+    ps = [period, '系统导出']
     ps.extend(paths)
     return utils.join_path(ps)
 
@@ -415,12 +437,12 @@ def export_all_errs(period, errs):
     writer.save()
 
 
-def export_errs_by_display_depart(period, errs, departs):
+def export_errs_by_depart_type(period, errs, departs, depart_type=utils.depart_display_column_name):
     for depart in departs:
         file_dir = get_export_path(period, [depart])
         file_name = f"{period}_{depart}_效验结果.xlsx"
 
-        depart_err = split_by_display_depart(errs, depart)
+        depart_err = split_by_depart_type(errs, depart, depart_type)
         if len(depart_err) > 0:
             writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
             for name, df in depart_err.items():
@@ -428,10 +450,10 @@ def export_errs_by_display_depart(period, errs, departs):
             writer.save()
 
 
-def split_by_display_depart(errs, depart):
+def split_by_depart_type(errs, depart, depart_type=utils.depart_display_column_name):
     res = {}
     for name, df in errs.items():
-        depart_df = df[df[utils.depart_display_column_name] == depart]
+        depart_df = df[df[depart_type] == depart]
         if not depart_df.empty:
             res[name] = depart_df
     return res
