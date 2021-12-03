@@ -9,8 +9,6 @@
 '''
 
 import src.salarys.salary_infos as s_infos
-import src.salarys.utils as utils
-import pandas as pd
 
 
 def done():
@@ -26,7 +24,7 @@ def done():
         # 输出汇总信息
         s_infos.export_all_errs(period, errs)
         # 根据显示单位分别数据
-        s_infos.export_errs_by_display_depart(
+        s_infos.export_errs_by_depart_type(
             period, errs, departs.depart_dispaly_names())
     # 输出各类数据
     # else:

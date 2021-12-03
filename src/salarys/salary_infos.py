@@ -164,12 +164,12 @@ class SalaryBanks(SalaryBaseInfo):
     def split_by_bank_purpose(self):
         if not self.df.empty:
             gz_bank_df = self.df[(self.df[get_column_name(
-                self.name, "卡用途")].str.contains('工资') == True) & (self.df[get_column_name(
+                self.name, "卡用途")].str.contains('工资')) & (self.df[get_column_name(
                     self.name, "卡号")].notna())]
             gz_bank_df.drop_duplicates(
                 subset=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], inplace=True)
             jj_bank_df = self.df[((self.df[get_column_name(
-                self.name, "卡用途")].str.contains('奖金')) == True) & (self.df[get_column_name(
+                self.name, "卡用途")].str.contains('奖金'))) & (self.df[get_column_name(
                     self.name, "卡号")].notna())]
             jj_bank_df.drop_duplicates(
                 subset=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], inplace=True)
@@ -191,8 +191,7 @@ class SalaryPersons(SalaryBaseInfo):
         super().__init__(period)
         self.name = '人员信息导出结果'
         super().get_infos()
-        self.df.drop_duplicates(get_column_name(
-            self.name, utils.code_info_column_name), inplace=True)
+        self.df.drop_duplicates(utils.code_info_column_name, inplace=True)
 
     def do_after_load_data(self):
         if not self.df.empty:
@@ -257,13 +256,13 @@ class SalaryGjj(SalaryBaseInfo):
 
 
 def split_depart_infos(departs, no=0):
-    return list(map(lambda s: s.split(
-        utils.depart_info_sep)[no], departs))
+    return list(map(lambda s:  s.split(
+        utils.depart_info_sep)[no] if utils.depart_info_sep in s else s, departs))
 
 
 def get_depart_display_info(depart_infos, departs):
     if departs:
-        return list(map(lambda s: departs.display_depart_name(s[0], s[1]), depart_infos))
+        return list(map(lambda s: departs.display_depart_name(s[0], s[1]) if len(s) == 2 else s[0], depart_infos))
 
 
 def get_column_name(prefix, column_name, suffix=""):
@@ -297,7 +296,23 @@ def contact_info(gzs, jjs, banks, jobs, persons, tax):
     df = contact_bank_info(df, banks)
     df = contact_job_info(df, jobs)
     df = contact_tax_info(df, tax)
+    df = contact_tax_validate(df)
     return df
+
+
+def contact_tax_validate(df):
+    if utils.tax_column_name in df.columns and '累计应补(退)税额' in df.columns:
+        df['个税调整_值'] = df.apply(lambda x: tax_compare(
+            x[utils.suodeshui_column_name], x['累计应补(退)税额']), axis=1)
+    return df.copy()
+
+
+def tax_compare(tax1, tax2):
+    if pd.isna(tax1):
+        tax1 = 0
+    if pd.isna(tax2):
+        tax2 = 0
+    return round(tax1 + tax2, 2)
 
 
 def validator_bank_info(df):
@@ -335,13 +350,11 @@ def validator_sf_info(df):
 
 def validator_tax_info(df):
     val_dict = {}
-    if "所得税" in df.columns and "累计应补(退)税额" in df.columns:
-        res = df[df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2) != 0]
+    if "个税调整_值" in df.columns:
+        res = df[(df["个税调整_值"].isna()) | (df["个税调整_值"].round(2) != 0)]
         if not res.empty:
-            res = res.copy()
-            res = export_columns(res)
-            res.loc[:, "个税调整_值"] = 0 - \
-                df.loc[:, ["所得税", "累计应补(退)税额"]].sum(axis=1).round(2)
+            res = export_columns(
+                res, ['证件号码', utils.suodeshui_column_name, '累计应补(退)税额', '个税调整_值'])
             val_dict['个税错误信息'] = res.copy()
     return val_dict
 
@@ -360,7 +373,11 @@ def validator_id_info(df):
 def validator_gjj(df):
     val_dict = {}
     if get_column_name(SalaryGzs.name, "公积金方案") in df.columns:
-        df
+        res = df[df[get_column_name(
+            SalaryGjj.name, utils.gjj_v_column_name)] == 'ERR']
+        if not res.empty:
+            res = export_columns(res)
+            val_dict['公积金方案设置错误'] = res.copy()
     return val_dict
 
 
@@ -410,6 +427,10 @@ def validator(df):
     id_v = validator_id_info(df)
     if len(id_v) > 0:
         val_dict = {**val_dict, **id_v}
+    # 公积金方案设置错误
+    gjj_v = validator_gjj(df)
+    if len(gjj_v) > 0:
+        val_dict = {**val_dict, **gjj_v}
     # 其他信息
     other_v = validator_other(df)
     if len(other_v) > 0:
@@ -417,9 +438,13 @@ def validator(df):
     return val_dict
 
 
-def export_columns(df):
+def export_columns(df, other=[]):
     # 编码 姓名
-    return df[[utils.tax_column_name, utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), utils.depart_display_column_name, get_column_name(SalaryGzs.name, utils.depart_info_column_name)]]
+    columns = [utils.tax_column_name, utils.code_info_column_name, get_column_name(
+        SalaryGzs.name, utils.name_info_column_name), utils.depart_display_column_name, get_column_name(SalaryGzs.name, utils.depart_info_column_name)]
+    if len(other) != 0:
+        columns.extend(other)
+    return df[columns]
 
 
 def get_export_path(period,  paths=[]):
@@ -510,13 +535,13 @@ def contact_bank_info(df, banks):
     if banks.df.empty:
         return df
     if not banks.df.empty:
-        bank_df = banks.df[[utils.code_info_column_name,  utils.tax_column_name, utils.depart_display_column_name, get_column_name(
+        bank_df = banks.df[[utils.code_info_column_name,  utils.tax_column_name, get_column_name(
             banks.name, "金融机构", "工资卡"), get_column_name(
             banks.name, "卡号", "工资卡"), get_column_name(
             banks.name, "金融机构", "奖金卡"), get_column_name(
             banks.name, "卡号", "奖金卡")]]
         return pd.merge(df, bank_df, on=[
-            utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='left')
+            utils.code_info_column_name, utils.tax_column_name], how='left')
 
 
 def contact_job_info(df, jobs):

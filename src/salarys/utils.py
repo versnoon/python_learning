@@ -43,6 +43,8 @@ shifa_column_name = '实发合计'
 suodeshui_column_name = '所得税'
 jigou_column_name = '机构全路径'
 
+gjj_v_column_name = '公积金验证'
+
 
 def root_dir_() -> str:
     path = os.path.join(root_dir, test_dir, 'bw')
