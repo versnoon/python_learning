@@ -9,6 +9,8 @@
 '''
 
 import src.salarys.salary_infos as s_infos
+import src.salarys.bw_hr_salary as b_infos
+import src.salarys.utils as utils
 
 
 def done():
@@ -18,6 +20,7 @@ def done():
     # 合并数据
     # banks.df.to_excel('bank.xlsx')
     df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax)
+    df.to_excel('xxx.xlsx')
     # 验证数据
     errs = s_infos.validator(df)
     if len(errs) > 0:
@@ -29,4 +32,9 @@ def done():
     # 输出各类数据
     # else:
     #     s_infos.export(gzs, jjs, df)
-    s_infos.to_sap_frame(df)
+    # s_infos.to_sap_frame(df)
+    tax_res = b_infos.to_tax_df(df)
+    b_infos.export_by_depart_type(
+        tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
+    b_infos.export_by_depart_type(
+        tax_res, period, departs.depart_dispaly_names(), filename='工资薪金所得', depart_type=utils.depart_display_column_name)

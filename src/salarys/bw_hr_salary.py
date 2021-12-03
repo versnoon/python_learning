@@ -15,7 +15,7 @@ from src.salarys import utils
 from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name, depart_display_column_name, gjj_v_column_name, suodeshui_column_name, name_info_column_name, yingfa_column_name, depart_column_name, file_path
 from src.salarys.period import Period
 from src.salarys.depart import Departs
-from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, SalaryGjj, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info, validator_bank_info, validator_sf_info, validator_id_info, validator_gjj, validator_other, validator_tax_info, get_export_path
+from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, SalaryGjj, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info, validator_bank_info, validator_sf_info, validator_id_info, validator_gjj, validator_other, validator_tax_info, get_export_path, contact_tax_validate
 
 
 def init():
@@ -173,19 +173,19 @@ def contact_gjj_info(df, gjjs):
         code_info_column_name, tax_column_name], how='left')
 
 
-def contact_tax_validate(df):
-    if '累计应补(退)税额' in df.columns:
-        df['个税调整_值'] = df.apply(lambda x: tax_compare(
-            x[suodeshui_column_name], x['累计应补(退)税额']), axis=1)
-    return df.copy()
+# def contact_tax_validate(df):
+#     if '累计应补(退)税额' in df.columns:
+#         df['个税调整_值'] = df.apply(lambda x: tax_compare(
+#             x[suodeshui_column_name], x['累计应补(退)税额']), axis=1)
+#     return df.copy()
 
 
-def tax_compare(tax1, tax2):
-    if pd.isna(tax1):
-        tax1 = 0
-    if pd.isna(tax2):
-        tax2 = 0
-    return round(tax1 - tax2, 2)
+# def tax_compare(tax1, tax2):
+#     if pd.isna(tax1):
+#         tax1 = 0
+#     if pd.isna(tax2):
+#         tax2 = 0
+#     return round(tax1 - tax2, 2)
 
 
 def contact_gjj_validate(df, departs):
@@ -236,6 +236,7 @@ def to_tax_df(df):
         SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', yingfa_column_name: '本期收入', '工资信息-养老保险个人额度': '基本养老保险费', '工资信息-医疗保险个人额度': '基本医疗保险费', '工资信息-失业保险个人额度': '失业保险费', '工资信息-公积金个人额度': '住房公积金', '工资信息-企业年金个人基础缴费': '企业(职业)年金', depart_column_name: '备注'})
     res = t[['工号', '*姓名', '*证件号码', '本期收入', '基本养老保险费',
              '基本医疗保险费', '失业保险费', '住房公积金', '企业(职业)年金', '备注', utils.tax_column_name, utils.depart_display_column_name]]
+    res.select_dtypes(include=['int64,float64']).abs()
     res.insert(2, column='*证件类型', value='居民身份证')
     res.insert(5, column='*本期免税收入', value=pd.NA)
     res.insert(10, column='累计子女教育', value=pd.NA)

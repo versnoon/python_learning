@@ -63,7 +63,7 @@ class SalaryBaseInfo:
 
         # 规范关键字段的字段名称
         self.df.rename(
-            columns={'通行证': utils.code_info_column_name, '工号': utils.code_info_column_name, '部门': utils.depart_info_column_name, '所在机构': utils.depart_info_column_name, '所属机构': utils.depart_info_column_name, '机构名称': utils.depart_info_column_name, '银行卡号': '卡号'},  inplace=True)
+            columns={'通行证': utils.code_info_column_name, '工号': utils.code_info_column_name, '部门': utils.depart_info_column_name, '所在机构': utils.depart_info_column_name, '所属机构': utils.depart_info_column_name, '机构名称': utils.depart_info_column_name, '银行卡号': '卡号', '企业年金个人额度': '企业年金个人基础缴费'},  inplace=True)
 
         self.df.rename(columns=lambda x: get_column_name(
             self.name, x), inplace=True)
@@ -122,6 +122,19 @@ class SalaryGzs(SalaryBaseInfo):
         self.file_sub_dir = [utils.gz_jj_dir]
         super().get_infos()
 
+    def do_after_load_data(self):
+        if not self.df.empty:
+            if "养老保险个人额度" in self.df.columns:
+                self.df["养老保险个人额度"] = self.df["养老保险个人额度"].abs()
+            if "失业保险个人额度" in self.df.columns:
+                self.df["失业保险个人额度"] = self.df["失业保险个人额度"].abs()
+            if "医疗保险个人额度" in self.df.columns:
+                self.df["医疗保险个人额度"] = self.df["医疗保险个人额度"].abs()
+            if "公积金个人额度" in self.df.columns:
+                self.df["公积金个人额度"] = self.df["公积金个人额度"].abs()
+            if "企业年金个人额度" in self.df.columns:
+                self.df["企业年金个人额度"] = self.df["企业年金个人额度"].abs()
+
 
 class SalaryJjs(SalaryBaseInfo):
     """
@@ -173,7 +186,11 @@ class SalaryBanks(SalaryBaseInfo):
                     self.name, "卡号")].notna())]
             jj_bank_df.drop_duplicates(
                 subset=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], inplace=True)
-            return pd.merge(gz_bank_df, jj_bank_df, on=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=[f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
+            t = pd.merge(gz_bank_df, jj_bank_df, on=[utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=[
+                         f"{utils.column_name_suffix_sep}工资卡", f"{utils.column_name_suffix_sep}奖金卡"])
+            t.drop_duplicates(
+                subset=[utils.code_info_column_name, utils.tax_column_name], inplace=True)
+            return t
         return pd.DataFrame()
     # def export_some_columns(self, export_columns=[]):
     #     df = self.df[list(
@@ -312,7 +329,7 @@ def tax_compare(tax1, tax2):
         tax1 = 0
     if pd.isna(tax2):
         tax2 = 0
-    return round(tax1 + tax2, 2)
+    return round(tax2 - tax1, 2)
 
 
 def validator_bank_info(df):
@@ -508,6 +525,7 @@ def append_yingf_shif_shui(df):
         else:
             df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
                 SalaryGzs.name, "个调税"), get_column_name(SalaryJjs.name, "个调税")]].sum(axis=1))
+        df[utils.suodeshui_column_name] = df[utils.suodeshui_column_name].abs()
     if get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金") in df.columns and get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金") in df.columns:
         df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
             SalaryGzs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金")]].sum(axis=1))
