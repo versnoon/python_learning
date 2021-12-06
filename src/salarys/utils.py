@@ -47,7 +47,7 @@ gjj_v_column_name = '公积金验证'
 
 
 def root_dir_() -> str:
-    path = os.path.join(root_dir, test_dir, 'bw')
+    path = os.path.join(root_dir, test_dir)
     return path
 
 

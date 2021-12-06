@@ -15,11 +15,11 @@ import src.salarys.utils as utils
 
 def done():
     # 加载数据
-    period, departs, gzs, jjs, banks, jobs, persons, tax = s_infos.load_data_to_frame()
+    period, departs, gzs, jjs, banks, jobs, persons, tax, taxOne = s_infos.load_data_to_frame()
 
     # 合并数据
     # banks.df.to_excel('bank.xlsx')
-    df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax)
+    df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax, taxOne)
     df.to_excel('xxx.xlsx')
     # 验证数据
     errs = s_infos.validator(df)

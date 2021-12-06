@@ -38,7 +38,7 @@ class SalaryBaseInfo:
             raise ValueError(f'请指定期间信息')
         self.name = ''
         self.file_sub_dir = []
-        self.df = None
+        self.df = pd.DataFrame()
         self.group_by = []
         self.converters = {}
         self.skip_err = True
@@ -48,7 +48,7 @@ class SalaryBaseInfo:
         return [col for col in self.group_by]
 
     def get_df_and_err_paths(self):
-        if not self.df:
+        if self.df.empty:
             self.df, self.err_paths = prx.make_df_from_excel_files(
                 period=self.period, file_root_path=utils.root_dir_(), file_sub_path=self.file_sub_dir, file_name_prefix=self.name)
             if not self.skip_err:
@@ -244,7 +244,7 @@ class SalaryTaxs(SalaryBaseInfo):
         return f'{self.period}_税款计算_工资薪金所得'
 
     def get_tax(self):
-        if not self.df:
+        if self.df.empty:
             chunks = []
             for tax_depart in self.tax_departs:
                 df, _ = prx.make_df_from_excel_files(
@@ -257,6 +257,17 @@ class SalaryTaxs(SalaryBaseInfo):
                 self.df = pd.concat(chunks, ignore_index=True)
             else:
                 self.df = pd.DataFrame()
+
+
+class SalaryOneTaxs(SalaryTaxs):
+    def __init__(self, period, tax_departs=[]) -> None:
+        super().__init__(period)
+        self.tax_departs = tax_departs
+        self.name = self.tax_name()
+        self.get_tax()
+
+    def tax_name(self):
+        return f'{self.period}_税款计算_全年一次性奖金收入'
 
 
 class SalaryGjj(SalaryBaseInfo):
@@ -304,15 +315,17 @@ def load_data_to_frame():
     jobs = SalaryPersonJobs(period, departs=ds)
     persons = SalaryPersons(period)
     tax = SalaryTaxs(period, ds.tax_departs())
-    return period, ds, gzs, jjs, banks, jobs, persons, tax
+    taxOne = SalaryOneTaxs(period, ds.tax_departs())
+    return period, ds, gzs, jjs, banks, jobs, persons, tax, taxOne
 
 
-def contact_info(gzs, jjs, banks, jobs, persons, tax):
+def contact_info(gzs, jjs, banks, jobs, persons, tax, taxOne):
     df = merge_gz_and_jj(gzs, jjs)
     df = contact_id_info(df, persons)
     df = contact_bank_info(df, banks)
     df = contact_job_info(df, jobs)
     df = contact_tax_info(df, tax)
+    df = contact_tax_one_info(df, taxOne)
     df = contact_tax_validate(df)
     return df
 
@@ -321,15 +334,21 @@ def contact_tax_validate(df):
     if utils.tax_column_name in df.columns and '累计应补(退)税额' in df.columns:
         df['个税调整_值'] = df.apply(lambda x: tax_compare(
             x[utils.suodeshui_column_name], x['累计应补(退)税额']), axis=1)
+        if '累计应补(退)税额_一次性' in df.columns:
+            df['个税调整_值'] = df.apply(lambda x: tax_compare(
+                x[utils.suodeshui_column_name], x['累计应补(退)税额'], x['累计应补(退)税额_一次性']), axis=1)
+
     return df.copy()
 
 
-def tax_compare(tax1, tax2):
+def tax_compare(tax1, tax2, tax_one=0):
     if pd.isna(tax1):
         tax1 = 0
     if pd.isna(tax2):
         tax2 = 0
-    return round(tax2 - tax1, 2)
+    if pd.isna(tax_one):
+        tax_one = 0
+    return round(tax2 + tax_one - tax1, 2)
 
 
 def validator_bank_info(df):
@@ -585,6 +604,18 @@ def contact_tax_info(df, tax):
             f'{utils.person_id_column_name}_lower', utils.tax_column_name], how='outer')
     else:
         return df
+
+
+def contact_tax_one_info(df, taxone):
+    if not taxone.df.empty:
+        tax_df = taxone.df[[utils.person_id_column_name,
+                            utils.tax_column_name, "累计应补(退)税额"]]
+        tax_df.rename(columns={'累计应补(退)税额': '累计应补(退)税额_一次性'}, inplace=True)
+        tax_df.loc[:, f'{utils.person_id_column_name}_一次性_lower'] = tax_df[utils.person_id_column_name].str.lower()
+        return pd.merge(df, tax_df[[f'{utils.person_id_column_name}_一次性_lower',
+                                    utils.tax_column_name, "累计应补(退)税额_一次性"]], left_on=["人员信息导出结果-证件号码_lower", utils.tax_column_name], right_on=[
+            f'{utils.person_id_column_name}_一次性_lower', utils.tax_column_name], how='outer')
+    return df
 
 
 # def append_code_and_id_and_bank_and_tax_and_job(df, persons, banks, jobs):
