@@ -45,6 +45,9 @@ jigou_column_name = '机构全路径'
 
 gjj_v_column_name = '公积金验证'
 
+max_gjj = 2410  # 公积金上限
+max_nj = 894  # 年金上限
+
 
 def root_dir_() -> str:
     path = os.path.join(root_dir, test_dir)

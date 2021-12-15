@@ -15,12 +15,12 @@ import src.salarys.utils as utils
 
 def done():
     # 加载数据
-    period, departs, gzs, jjs, banks, jobs, persons, tax, taxOne = s_infos.load_data_to_frame()
+    period, departs, gzs, jjs, banks, jobs, persons, tax, taxOne, gjjs = s_infos.load_data_to_frame()
 
     # 合并数据
     # banks.df.to_excel('bank.xlsx')
-    df = s_infos.contact_info(gzs, jjs, banks, jobs, persons, tax, taxOne)
-    df.to_excel('xxx.xlsx')
+    df = s_infos.contact_info(gzs=gzs, jjs=jjs, banks=banks, jobs=jobs,
+                              persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
     # 验证数据
     errs = s_infos.validator(df)
     if len(errs) > 0:
@@ -33,7 +33,7 @@ def done():
     # else:
     #     s_infos.export(gzs, jjs, df)
     # s_infos.to_sap_frame(df)
-    tax_res = b_infos.to_tax_df(df)
+    tax_res = b_infos.to_tax_df(df, b_infos.format_tax_data)
     b_infos.export_by_depart_type(
         tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
     b_infos.export_by_depart_type(

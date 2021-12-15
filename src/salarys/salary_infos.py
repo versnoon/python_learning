@@ -17,13 +17,15 @@ import src.salarys.depart as depart_op
 
 
 def depart_info_map(x):
-    departs = x.split("\\")
-    first = 0
-    for i, d in enumerate(departs):
-        if "总部" in d:
-            first = i
-            break
-    return "\\".join(departs[first:])
+    if not pd.isna(x):
+        departs = x.split("\\")
+        first = 0
+        for i, d in enumerate(departs):
+            if "总部" in d:
+                first = i
+                break
+        return "\\".join(departs[first:])
+    return x
 
 
 def bank_card_no(x):
@@ -124,16 +126,22 @@ class SalaryGzs(SalaryBaseInfo):
 
     def do_after_load_data(self):
         if not self.df.empty:
-            if "养老保险个人额度" in self.df.columns:
-                self.df["养老保险个人额度"] = self.df["养老保险个人额度"].abs()
-            if "失业保险个人额度" in self.df.columns:
-                self.df["失业保险个人额度"] = self.df["失业保险个人额度"].abs()
-            if "医疗保险个人额度" in self.df.columns:
-                self.df["医疗保险个人额度"] = self.df["医疗保险个人额度"].abs()
-            if "公积金个人额度" in self.df.columns:
-                self.df["公积金个人额度"] = self.df["公积金个人额度"].abs()
-            if "企业年金个人额度" in self.df.columns:
-                self.df["企业年金个人额度"] = self.df["企业年金个人额度"].abs()
+            pass
+            # if "养老保险个人额度" in self.df.columns:
+            #     if self.df["养老保险个人额度"] < 0:
+            #         self.df["养老保险个人额度"] = self.df["养老保险个人额度"].abs()
+            # if "失业保险个人额度" in self.df.columns:
+            #     if self.df["失业保险个人额度"] < 0:
+            #         self.df["失业保险个人额度"] = self.df["失业保险个人额度"].abs()
+            # if "医疗保险个人额度" in self.df.columns:
+            #     if self.df["医疗保险个人额度"] < 0:
+            #         self.df["医疗保险个人额度"] = self.df["医疗保险个人额度"].abs()
+            # if "公积金个人额度" in self.df.columns:
+            #     if self.df["公积金个人额度"] < 0:
+            #         self.df["公积金个人额度"] = self.df["公积金个人额度"].abs()
+            # if "企业年金个人额度" in self.df.columns:
+            #     if self.df["企业年金个人额度"] < 0:
+            #         self.df["企业年金个人额度"] = self.df["企业年金个人额度"].abs()
 
 
 class SalaryJjs(SalaryBaseInfo):
@@ -285,7 +293,7 @@ class SalaryGjj(SalaryBaseInfo):
 
 def split_depart_infos(departs, no=0):
     return list(map(lambda s:  s.split(
-        utils.depart_info_sep)[no] if utils.depart_info_sep in s else s, departs))
+        utils.depart_info_sep)[no] if not pd.isna(s) and utils.depart_info_sep in s else s, departs))
 
 
 def get_depart_display_info(depart_infos, departs):
@@ -316,10 +324,11 @@ def load_data_to_frame():
     persons = SalaryPersons(period)
     tax = SalaryTaxs(period, ds.tax_departs())
     taxOne = SalaryOneTaxs(period, ds.tax_departs())
-    return period, ds, gzs, jjs, banks, jobs, persons, tax, taxOne
+    gjjs = SalaryGjj(period, ds)
+    return period, ds, gzs, jjs, banks, jobs, persons, tax, taxOne, gjjs
 
 
-def contact_info(gzs, jjs, banks, jobs, persons, tax, taxOne):
+def contact_info(gzs=None, jjs=None, banks=None, jobs=None, persons=None, tax=None, taxOne=None, departs=None, gjjs=None):
     df = merge_gz_and_jj(gzs, jjs)
     df = contact_id_info(df, persons)
     df = contact_bank_info(df, banks)
@@ -327,7 +336,25 @@ def contact_info(gzs, jjs, banks, jobs, persons, tax, taxOne):
     df = contact_tax_info(df, tax)
     df = contact_tax_one_info(df, taxOne)
     df = contact_tax_validate(df)
+    df = contact_gjj_info(df, gjjs)
+    df = contact_gjj_validate(df, departs)
     return df
+
+
+def contact_gjj_info(df, gjjs):
+    if gjjs.df.empty:
+        return df
+    gjj_column = get_column_name(SalaryGjj.name, '公积金(类型)')
+    gjj_df = gjjs.df[[utils.code_info_column_name,
+                      utils.tax_column_name, gjj_column]]
+    return pd.merge(df, gjj_df, on=[
+        utils.code_info_column_name, utils.tax_column_name], how='left')
+
+
+def contact_gjj_validate(df, departs):
+    df[utils.gjj_v_column_name] = df.apply(lambda x: departs.get_gjj_fangan(
+        x[utils.tax_column_name], x[get_column_name(SalaryGjj.name, '公积金(类型)')], x[utils.depart_display_column_name]) if get_column_name(SalaryGjj.name, '公积金(类型)') in x.index else '', axis=1)
+    return df.copy()
 
 
 def contact_tax_validate(df):

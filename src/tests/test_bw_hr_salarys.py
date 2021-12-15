@@ -17,9 +17,9 @@ class TestBwSalarys:
 
     def test_init_bw_folder(self):
         bw_hr_salary.init()
-        p, departs, persons, gzs, jjs, banks, tax, gjjs = bw_hr_salary.load_data()
+        p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
-            gzs, jjs, banks=banks, persons=persons, tax=tax, gjjs=gjjs, departs=departs)
+            gzs, jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
         # df.to_excel('df.xlsx')
         period = p.get_period_info()
         errs = bw_hr_salary.validator(df)
@@ -41,17 +41,17 @@ class TestBwSalarys:
 
     def test_tax_export(self):
         bw_hr_salary.init()
-        _, departs, persons, gzs, jjs, banks, tax, gjjs = bw_hr_salary.load_data()
+        _, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
-            gzs, jjs, banks=banks, persons=persons, tax=tax, gjjs=gjjs, departs=departs)
+            gzs, jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
         tax_res = bw_hr_salary.to_tax_df(df)
         tax_res.to_excel('tax.xlsx', sheet_name='工资薪金所得')
 
     def test_export_split(self):
         bw_hr_salary.init()
-        p, departs, persons, gzs, jjs, banks, tax, gjjs = bw_hr_salary.load_data()
+        p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
-            gzs, jjs, banks=banks, persons=persons, tax=tax, gjjs=gjjs, departs=departs)
+            gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
         period = p.get_period_info()
         tax_res = bw_hr_salary.to_tax_df(df)
         bw_hr_salary.export_by_depart_type(
