@@ -11,6 +11,7 @@
 from src.salarys import bw_hr_salary
 from src.salarys import salary_infos
 from src.salarys import utils
+from src.salarys import bw_salary_modes
 
 
 class TestBwSalarys:
@@ -58,3 +59,7 @@ class TestBwSalarys:
             tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
         bw_hr_salary.export_by_depart_type(
             tax_res, period, departs.depart_dispaly_names(), filename='工资薪金所得', depart_type=utils.depart_display_column_name)
+
+    def test_new_bw_salary_ops(self):
+        period = bw_salary_modes.Period()
+        assert period.name == '期间信息'
