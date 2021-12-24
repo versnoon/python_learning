@@ -32,7 +32,8 @@ def done():
     # 输出各类数据
     # else:
     #     s_infos.export(gzs, jjs, df)
-    # s_infos.to_sap_frame(df)
+    sap_df = s_infos.to_sap_frame(df)
+    sap_df.to_excel(f'{period}_sh002.xls')
     tax_res = b_infos.to_tax_df(df, b_infos.format_tax_data)
     b_infos.export_by_depart_type(
         tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)

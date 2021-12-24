@@ -50,7 +50,7 @@ max_nj = 894  # 年金上限
 
 
 def root_dir_() -> str:
-    path = os.path.join(root_dir, test_dir)
+    path = os.path.join(root_dir, test_dir, 'bw')
     return path
 
 

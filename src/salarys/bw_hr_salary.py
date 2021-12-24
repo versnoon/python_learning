@@ -28,36 +28,36 @@ def format_tax_data(x):
             total = 0
         yl = x['基本养老保险费']
         if not pd.isna(yl):
-            if yl > 0:
-                total = total + yl
+            if yl < 0:
+                total = total - yl
                 yl = 0
             else:
                 yl = abs(yl)
         yil = x['基本医疗保险费']
         if not pd.isna(yil):
-            if yil > 0:
-                total = total + yil
+            if yil < 0:
+                total = total - yil
                 yil = 0
             else:
                 yil = abs(yil)
         shiy = x['失业保险费']
         if not pd.isna(shiy):
-            if shiy > 0:
-                total = total + shiy
+            if shiy < 0:
+                total = total - shiy
                 shiy = 0
             else:
                 shiy = abs(shiy)
         nj = x['企业(职业)年金']
         if not pd.isna(nj):
-            if nj < (0-utils.max_nj):
-                total = total + (0-utils.max_nj-nj)
+            if nj > utils.max_nj:
+                total = total + (nj - utils.max_nj)
                 nj = utils.max_nj
             else:
                 nj = abs(nj)
         gjj = x['住房公积金']
         if not pd.isna(gjj):
-            if gjj < (0-utils.max_gjj):
-                total = total + (0-utils.max_gjj-gjj)
+            if gjj > (utils.max_gjj):
+                total = total + (gjj - utils.max_gjj)
                 gjj = utils.max_gjj
             else:
                 gjj = abs(gjj)
@@ -283,7 +283,7 @@ def validator(df):
 def to_tax_df(df, func):
     # 将原数据转为税表格式
     t = df.rename(columns={code_info_column_name: '工号', get_column_name(
-        SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', yingfa_column_name: '本期收入', '工资信息-养老保险个人额度': '基本养老保险费', '工资信息-医疗保险个人额度': '基本医疗保险费', '工资信息-失业保险个人额度': '失业保险费', '工资信息-公积金个人额度': '住房公积金', '工资信息-企业年金个人基础缴费': '企业(职业)年金', depart_column_name: '备注'})
+        SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', yingfa_column_name: '本期收入', '工资信息-养老保险个人额度': '基本养老保险费', '工资信息-医疗保险个人额度': '基本医疗保险费', '工资信息-失业保险个人额度': '失业保险费', '工资信息-公积金个人额度': '住房公积金', get_column_name(SalaryGzs.name, '子女教育专项附加扣除'): '累计子女教育', get_column_name(SalaryGzs.name, '继续教育专项附加扣除'): '累计继续教育', get_column_name(SalaryGzs.name, '普通住房贷款利息专项附加扣除'): '累计住房贷款利息', get_column_name(SalaryGzs.name, '住房租金专项附加扣除'): '累计住房租金', get_column_name(SalaryGzs.name, '赡养老人专项附加扣除'): '累计赡养老人', '工资信息-企业年金个人基础缴费': '企业(职业)年金', depart_column_name: '备注'})
 
     res = t[['工号', '*姓名', '*证件号码', '本期收入', '基本养老保险费',
              '基本医疗保险费', '失业保险费', '住房公积金', '企业(职业)年金', '备注', utils.tax_column_name, utils.depart_display_column_name]]
@@ -293,7 +293,6 @@ def to_tax_df(df, func):
     res[["本期收入", '基本养老保险费',
          '基本医疗保险费', '失业保险费', '住房公积金', '企业(职业)年金']] = res.apply(
         func, axis=1, result_type='expand')
-    res.select_dtypes(include=['int64,float64']).abs()
     res.insert(2, column='*证件类型', value='居民身份证')
     res.insert(5, column='*本期免税收入', value=pd.NA)
     res.insert(10, column='累计子女教育', value=pd.NA)

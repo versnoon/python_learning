@@ -20,19 +20,19 @@ class TestBwSalarys:
         p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
             gzs, jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
-        # df.to_excel('df.xlsx')
+        df.to_excel('df.xlsx')
         period = p.get_period_info()
         errs = bw_hr_salary.validator(df)
         if len(errs) > 0:
 
             # 输出汇总信息
             salary_infos.export_all_errs(period, errs)
-        # # 根据税务单位输出数据
-        # # salary_infos.export_errs_by_depart_type(
-        # #     period, errs, departs.tax_departs(), utils.tax_column_name)
-        # # 根据显示单位输出数据
-        # # salary_infos.export_errs_by_depart_type(
-        # #     period, errs, departs.depart_dispaly_names())
+        # 根据税务单位输出数据
+        salary_infos.export_errs_by_depart_type(
+            period, errs, departs.tax_departs(), utils.tax_column_name)
+        #  根据显示单位输出数据
+        salary_infos.export_errs_by_depart_type(
+            period, errs, departs.depart_dispaly_names())
         # # sap = salary_infos.to_sap_frame(df)
         # else:
         #     # 输出相关表格
@@ -44,7 +44,7 @@ class TestBwSalarys:
         _, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
             gzs, jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
-        tax_res = bw_hr_salary.to_tax_df(df)
+        tax_res = bw_hr_salary.to_tax_df(df, bw_hr_salary.format_tax_data)
         tax_res.to_excel('tax.xlsx', sheet_name='工资薪金所得')
 
     def test_export_split(self):
@@ -53,7 +53,7 @@ class TestBwSalarys:
         df = bw_hr_salary.contact_info(
             gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
         period = p.get_period_info()
-        tax_res = bw_hr_salary.to_tax_df(df)
+        tax_res = bw_hr_salary.to_tax_df(df, bw_hr_salary.format_tax_data)
         bw_hr_salary.export_by_depart_type(
             tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
         bw_hr_salary.export_by_depart_type(
