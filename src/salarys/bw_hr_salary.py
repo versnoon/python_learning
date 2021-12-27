@@ -12,7 +12,7 @@ import shutil
 import pandas as pd
 from src.salarys import utils
 
-from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name, depart_display_column_name, gjj_v_column_name, suodeshui_column_name, name_info_column_name, yingfa_column_name, depart_column_name, file_path
+from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessage, copy_file, gz_jj_dir, tax_dir, insurance_dir, result_dir, depart_file_name, gz_file_prefix, jj_file_prefix, code_info_column_name, person_id_column_name, tax_column_name, depart_display_column_name, name_info_column_name, yingfa_column_name, depart_column_name, file_path, shouru_column_name
 from src.salarys.period import Period
 from src.salarys.depart import Departs
 from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, SalaryGjj, SalaryOneTaxs, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info, validator_bank_info, validator_sf_info, validator_id_info, validator_gjj, validator_other, validator_tax_info, get_export_path, contact_tax_validate, contact_tax_one_info
@@ -283,7 +283,7 @@ def validator(df):
 def to_tax_df(df, func):
     # 将原数据转为税表格式
     t = df.rename(columns={code_info_column_name: '工号', get_column_name(
-        SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', yingfa_column_name: '本期收入', '工资信息-养老保险个人额度': '基本养老保险费', '工资信息-医疗保险个人额度': '基本医疗保险费', '工资信息-失业保险个人额度': '失业保险费', '工资信息-公积金个人额度': '住房公积金', get_column_name(SalaryGzs.name, '子女教育专项附加扣除'): '累计子女教育', get_column_name(SalaryGzs.name, '继续教育专项附加扣除'): '累计继续教育', get_column_name(SalaryGzs.name, '普通住房贷款利息专项附加扣除'): '累计住房贷款利息', get_column_name(SalaryGzs.name, '住房租金专项附加扣除'): '累计住房租金', get_column_name(SalaryGzs.name, '赡养老人专项附加扣除'): '累计赡养老人', '工资信息-企业年金个人基础缴费': '企业(职业)年金', depart_column_name: '备注'})
+        SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', shouru_column_name: '本期收入', '工资信息-养老保险个人额度': '基本养老保险费', '工资信息-医疗保险个人额度': '基本医疗保险费', '工资信息-失业保险个人额度': '失业保险费', '工资信息-公积金个人额度': '住房公积金', get_column_name(SalaryGzs.name, '子女教育专项附加扣除'): '累计子女教育', get_column_name(SalaryGzs.name, '继续教育专项附加扣除'): '累计继续教育', get_column_name(SalaryGzs.name, '普通住房贷款利息专项附加扣除'): '累计住房贷款利息', get_column_name(SalaryGzs.name, '住房租金专项附加扣除'): '累计住房租金', get_column_name(SalaryGzs.name, '赡养老人专项附加扣除'): '累计赡养老人', '工资信息-企业年金个人基础缴费': '企业(职业)年金', depart_column_name: '备注'})
 
     res = t[['工号', '*姓名', '*证件号码', '本期收入', '基本养老保险费',
              '基本医疗保险费', '失业保险费', '住房公积金', '企业(职业)年金', '备注', utils.tax_column_name, utils.depart_display_column_name]]
