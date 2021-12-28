@@ -22,6 +22,7 @@ tax_dir = '税务相关数据'
 insurance_dir = '三险两金数据'
 result_dir = '审核结果数据'
 depart_file_name = '审核机构信息.xls'
+period_file_name = '当前审核日期'
 
 depart_sep = '-X-'
 column_name_sep = '-'
@@ -40,6 +41,7 @@ person_id_column_name = '证件号码'
 
 yingfa_column_name = '应发合计'
 shifa_column_name = '实发合计'
+shouru_column_name = '本期收入'
 suodeshui_column_name = '所得税'
 jigou_column_name = '机构全路径'
 

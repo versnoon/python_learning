@@ -582,6 +582,17 @@ def append_yingf_shif_shui(df):
         df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
             SalaryGzs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应纳税额_全年一次性奖金")]].sum(axis=1))
 
+    if get_column_name(SalaryGzs.name, '兼课带教费') in df.columns and get_column_name(SalaryGzs.name, '驻外津贴') in df.columns:
+        df[utils.shouru_column_name] = (df.loc[:, [utils.yingfa_column_name, get_column_name(
+            SalaryGzs.name, "兼课带教费"), get_column_name(SalaryGzs.name, "驻外津贴")]].sum(axis=1))
+    else:
+        if get_column_name(SalaryGzs.name, '驻外津贴') in df.columns:
+            df[utils.shouru_column_name] = df[utils.yingfa_column_name].add(
+                df[get_column_name(SalaryGzs.name, '驻外津贴')], fill_value=0)
+        if get_column_name(SalaryGzs.name, '兼课带教费') in df.columns:
+            df[utils.shouru_column_name] = df[utils.yingfa_column_name].add(
+                df[get_column_name(SalaryGzs.name, '兼课带教费')], fill_value=0)
+
     df.loc[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.depart_info_column_name)
            ] = df[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.depart_info_column_name)]
     df.loc[df[get_column_name(SalaryGzs.name, utils.name_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.name_info_column_name)] = df[df[get_column_name(

@@ -16,6 +16,7 @@ from src.salarys.utils import join_path, file_path_exists, make_folder_if_nessag
 from src.salarys.period import Period
 from src.salarys.depart import Departs
 from src.salarys.salary_infos import SalaryBanks, SalaryBaseInfo, SalaryGzs, SalaryJjs, SalaryTaxs, SalaryGjj, SalaryOneTaxs, get_column_name, merge_gz_and_jj, contact_bank_info, contact_tax_info, validator_bank_info, validator_sf_info, validator_id_info, validator_gjj, validator_other, validator_tax_info, get_export_path, contact_tax_validate, contact_tax_one_info
+from src.salarys import pdf_gen
 
 
 def format_tax_data(x):
@@ -309,6 +310,28 @@ def to_tax_df(df, func):
     # 工号	*姓名	*证件类型	*证件号码	本期收入	本期免税收入
     # 基本养老保险费	基本医疗保险费	失业保险费	住房公积金	累计子女教育	累计继续教育	累计住房贷款利息
     # 累计住房租金	累计赡养老人	企业(职业)年金	商业健康保险	税延养老保险	其他	准予扣除的捐赠额	减免税额	备注
+
+
+def to_tax_df_one(df):
+    t = df.rename(columns={code_info_column_name: '工号', get_column_name(
+        SalaryGzs.name, name_info_column_name): '*姓名', get_column_name(BwSalaryPersons.name, "证件号码"): '*证件号码', get_column_name(
+        SalaryJjs.name, '年底兑现奖'): '*全年一次性奖金额', depart_column_name: '备注'})
+    res = t[['工号', '*姓名', '*证件号码', '*全年一次性奖金额',  '备注',
+             utils.tax_column_name, utils.depart_display_column_name]]
+    res.insert(2, column='*证件类型', value='居民身份证')
+    res.insert(5, column='免税收入', value=pd.NA)
+    res.insert(6, column='其他', value=pd.NA)
+    res.insert(7, column='准予扣除的捐赠额', value=pd.NA)
+    res.insert(8, column='减免税额', value=pd.NA)
+    res = res[res['*全年一次性奖金额'] > 0]
+    return res
+
+
+def to_salary_pay(period, departs, df):
+    salary_pay = pdf_gen.SalaryPay()
+    salary_pay.period = period
+    pdf_gen.create_pdf_new(period, departs, salary_pay)
+    pass
 
 
 def export_by_depart_type(df, period, departs, filename='导出文件', sheetname='Sheet1', depart_type=depart_display_column_name):

@@ -8,3 +8,5 @@
 @Contact :   tongtan@gmail.com
 '''
 NOT_FOUND_PERIOD_ERR = ValueError('缺少期间信息')
+
+DATA_IS_NULL = ValueError('数据为空，获取数据源失败')
