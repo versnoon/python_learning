@@ -64,6 +64,52 @@ def format_tax_data(x):
                 gjj = abs(gjj)
     return round(total, 2), round(yl, 2), round(yil, 2), round(shiy, 2), round(gjj, 2), round(nj, 2)
 
+
+def format_tax_data_o(x):
+    # 2020年公积金上限2680
+    # 2020年年金894
+    total, yl, yil, shiy, nj, gjj = 0, 0, 0, 0, 0, 0
+    if not x.empty:
+        total = x['本期收入']
+        if pd.isna(total):
+            total = 0
+        yl = x['基本养老保险费']
+        if not pd.isna(yl):
+            if yl > 0:
+                total = total + yl
+                yl = 0
+            else:
+                yl = abs(yl)
+        yil = x['基本医疗保险费']
+        if not pd.isna(yil):
+            if yil > 0:
+                total = total + yil
+                yil = 0
+            else:
+                yil = abs(yil)
+        shiy = x['失业保险费']
+        if not pd.isna(shiy):
+            if shiy > 0:
+                total = total + shiy
+                shiy = 0
+            else:
+                shiy = abs(shiy)
+        nj = x['企业(职业)年金']
+        if not pd.isna(nj):
+            if nj < (0-utils.max_nj):
+                total = total + (0 - nj - utils.max_nj)
+                nj = utils.max_nj
+            else:
+                nj = abs(nj)
+        gjj = x['住房公积金']
+        if not pd.isna(gjj):
+            if gjj < (0 - utils.max_gjj):
+                total = total + (0-gjj - utils.max_gjj)
+                gjj = utils.max_gjj
+            else:
+                gjj = abs(gjj)
+    return round(total, 2), round(yl, 2), round(yil, 2), round(shiy, 2), round(gjj, 2), round(nj, 2)
+
 # '基本医疗保险费', '失业保险费', '住房公积金', '企业(职业)年金',
 
 
@@ -328,9 +374,7 @@ def to_tax_df_one(df):
 
 
 def to_salary_pay(period, departs, df):
-    salary_pay = pdf_gen.SalaryPay()
-    salary_pay.period = period
-    pdf_gen.create_pdf_new(period, departs, salary_pay)
+    pdf_gen.create_pdf_new(period, departs, df)
     pass
 
 

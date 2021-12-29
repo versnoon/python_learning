@@ -255,12 +255,19 @@ class SalaryPay:
     #                     salary_pay._total_bank_jh_sf += jj._pay
 
 
-def create_pdf_new(period, departs, salary_pay):
+def create_pdf_new(period, departs, df):
     for tex_depart in departs.tax_departs():
-        salary_pay.sealname = seal_name(tex_depart)
-        salary_pay.depart = tex_depart
+        salary_pay = to_salary_pay(period, departs, df)
         to_tax_depart_new(period, file_name(
             period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
+
+
+def to_salary_pay(tex_depart, departs, df):
+    salary_pay = SalaryPay()
+    salary_pay.period = period
+    salary_pay.sealname = seal_name(tex_depart)
+    salary_pay.depart = tex_depart
+    tex_df = df[df[utils.tax_column_name] == tex_depart]
 
 
 def create_pdfs(period, departs, merges):

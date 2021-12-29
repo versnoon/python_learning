@@ -43,6 +43,7 @@ yingfa_column_name = '应发合计'
 shifa_column_name = '实发合计'
 shouru_column_name = '本期收入'
 suodeshui_column_name = '所得税'
+suodeshui_column_name_o = '所得税_o'
 jigou_column_name = '机构全路径'
 
 gjj_v_column_name = '公积金验证'
