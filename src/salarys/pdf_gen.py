@@ -257,17 +257,45 @@ class SalaryPay:
 
 def create_pdf_new(period, departs, df):
     for tex_depart in departs.tax_departs():
-        salary_pay = to_salary_pay(period, departs, df)
+        salary_pay = to_salary_pay(period, tex_depart, departs, df)
         to_tax_depart_new(period, file_name(
             period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
 
 
-def to_salary_pay(tex_depart, departs, df):
+def to_salary_pay(period, tex_depart, departs, df):
     salary_pay = SalaryPay()
     salary_pay.period = period
     salary_pay.sealname = seal_name(tex_depart)
     salary_pay.depart = tex_depart
-    tex_df = df[df[utils.tax_column_name] == tex_depart]
+    tg = df.groupby([utils.tax_column_name]).sum()
+    salary_pay._total_sf = tg.loc[tex_depart, '实发合计']
+    salary_pay._yangl_gr = tg.loc[tex_depart, '工资信息-养老保险个人额度']
+    salary_pay._yangl_qy = tg.loc[tex_depart, '工资信息-养老保险企业额度']
+    salary_pay._yil_gr = tg.loc[tex_depart, '工资信息-医疗保险个人额度']
+    salary_pay._yil_qy = tg.loc[tex_depart, '工资信息-医疗保险企业额度']
+    salary_pay._sy_gr = tg.loc[tex_depart, '工资信息-失业保险个人额度']
+    salary_pay._sy_qy = tg.loc[tex_depart, '工资信息-失业保险企业额度']
+    salary_pay._gjj_gr = tg.loc[tex_depart, '工资信息-公积金个人额度']
+    salary_pay._gjj_qy = tg.loc[tex_depart, '工资信息-公积金企业额度']
+    salary_pay._nj_gr = tg.loc[tex_depart, '工资信息-企业年金个人基础缴费']
+    salary_pay._nj_qy = tg.loc[tex_depart, '工资信息-企业年金企业额度']
+    salary_pay._gs = tg.loc[tex_depart, '工资信息-工伤保险企业额度']
+    salary_pay._sy = tg.loc[tex_depart, '工资信息-生育保险企业额度']
+    tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_工资卡']).sum()
+    salary_pay._total_bank_gh_sf = tg.loc[(tex_depart, '中国工商银行'), '工资信息-实发']
+    salary_pay._total_bank_zh_sf = tg.loc[(tex_depart, '中国银行'), '工资信息-实发']
+    salary_pay._total_bank_jh_sf = tg.loc[(tex_depart, '中国建设银行'), '工资信息-实发']
+    tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_奖金卡']).sum()
+    salary_pay._total_bank_gh_sf += tg.loc[(tex_depart, '中国工商银行'), '奖金信息-实发']
+    salary_pay._total_bank_zh_sf += tg.loc[(tex_depart, '中国银行'), '奖金信息-实发']
+    salary_pay._total_bank_jh_sf += tg.loc[(tex_depart, '中国建设银行'), '奖金信息-实发']
+    tg = df.groupby([utils.tax_column_name, '公积金信息-公积金方案']).sum()
+    if '马鞍山钢铁股份有限公司（总部）' == tex_depart:
+        salary_pay._total_gjj_gh = tg.loc[(tex_depart, '马鞍山钢铁股份有限公司（总部）公积金方案_1'), '工资信息-公积金个人额度'] + \
+            tg.loc[(tex_depart, '马鞍山钢铁股份有限公司（总部）公积金方案_1'), '工资信息-公积金企业额度']
+        salary_pay._total_gjj_jh = tg.loc[(tex_depart, '马鞍山钢铁股份有限公司（总部）公积金方案_2'), '工资信息-公积金个人额度'] + \
+            tg.loc[(tex_depart, '马鞍山钢铁股份有限公司（总部）公积金方案_2'), '工资信息-公积金企业额度']
+    return salary_pay
 
 
 def create_pdfs(period, departs, merges):
@@ -289,7 +317,8 @@ def seal_name(tex_depart):
     elif '马鞍山钢铁股份有限公司（总部）' == tex_depart:
         return "gf"
     else:
-        raise ValueError('获取印章图片出错!文件名称{}'.format(tex_depart))
+        return 'jt'
+        # raise ValueError('获取印章图片出错!文件名称{}'.format(tex_depart))
 
 
 def init_tff():

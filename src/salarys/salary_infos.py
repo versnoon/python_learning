@@ -369,11 +369,12 @@ def contact_gjj_validate(df, departs):
 
 def contact_tax_validate(df):
     if utils.tax_column_name in df.columns and '累计应补(退)税额' in df.columns:
-        df['个税调整_值'] = df.apply(lambda x: tax_compare(
-            x[utils.suodeshui_column_name], x['累计应补(退)税额']), axis=1)
-        if '累计应补(退)税额_一次性' in df.columns:
+        if utils.shouru_column_name in df.columns:
             df['个税调整_值'] = df.apply(lambda x: tax_compare(
-                x[utils.suodeshui_column_name], x['累计应补(退)税额'], x['累计应补(退)税额_一次性']), axis=1)
+                x[utils.suodeshui_column_name], x['累计应补(退)税额']), axis=1)
+            if '累计应补(退)税额_一次性' in df.columns:
+                df['个税调整_值'] = df.apply(lambda x: tax_compare(
+                    x[utils.suodeshui_column_name], x['累计应补(退)税额'], x['累计应补(退)税额_一次性']), axis=1)
 
     return df.copy()
 
@@ -742,10 +743,14 @@ def to_sap_frame(df):
         df, get_column_name(SalaryPersons.name, "人员类型"))
     sap_df["员工子组"] = get_df_values(
         df, get_column_name(SalaryPersons.name, "在职状态"))
+    # sap_df["职位"] = get_df_values(df, get_column_name(
+    #     SalaryPersonJobs.name, "组合(岗位序列+标准目录+岗位层级)"))
+    # sap_df["职族"] = get_df_values(df, get_column_name(
+    #     SalaryPersonJobs.name, "岗位类型"))
     sap_df["职位"] = get_df_values(df, get_column_name(
-        SalaryPersonJobs.name, "组合(岗位序列+标准目录+岗位层级)"))
+        SalaryPersons.name, "岗位"))
     sap_df["职族"] = get_df_values(df, get_column_name(
-        SalaryPersonJobs.name, "岗位类型"))
+        SalaryPersons.name, "标准岗位层级"))
     sap_df["岗位工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "岗位工资"))
     sap_df["保留工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "保留工资"))
     sap_df["年功工资"] = get_df_values(df, get_column_name(SalaryGzs.name, "工龄工资"))
@@ -806,7 +811,7 @@ def to_sap_frame(df):
     sap_df["医疗保险补缴"] = pd.NA
     sap_df["失业保险补缴"] = pd.NA
     sap_df["年金"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "企业年金个人额度"))
+        df, get_column_name(SalaryGzs.name, "企业年金个人基础缴费"))
     sap_df["工资税收"] = get_df_values(df, get_column_name(SalaryGzs.name, "所得税"))
     sap_df["水利基金"] = get_df_values(
         df, get_column_name(SalaryGzs.name, "其他代扣款"))
@@ -828,6 +833,7 @@ def to_sap_frame(df):
     sap_df["纪检津贴"] = pd.NA
     sap_df["计生津贴"] = pd.NA
     sap_df["误餐补贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "误餐补助"))
+    sap_df["矿山荣誉金"] = pd.NA
     sap_df["信访津贴"] = pd.NA
     sap_df["伤残津贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "工伤津贴"))
     sap_df["职务补贴"] = get_df_values(df, get_column_name(SalaryGzs.name, "公务车贴"))

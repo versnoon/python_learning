@@ -33,7 +33,8 @@ class TestBwSalarys:
         #  根据显示单位输出数据
             salary_infos.export_errs_by_depart_type(
                 period, errs, departs.depart_dispaly_names())
-        # # sap = salary_infos.to_sap_frame(df)
+        sap = salary_infos.to_sap_frame(df)
+        sap.to_excel(f'{period}_sh002.xlsx')
         # else:
         #     # 输出相关表格
         #     # 数据税表
@@ -63,12 +64,6 @@ class TestBwSalarys:
             tax_res = bw_hr_salary.to_tax_df_one(df)
             tax_res.to_excel('tax_one.xlsx', sheet_name='全年一次性奖金收入')
 
-    def test_pdf_export_one(self):
-        p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
-        df = bw_hr_salary.contact_info(
-            gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
-        bw_hr_salary.to_salary_pay(p.get_period_info(), departs, df)
-
     def test_export_split_2(self):
         bw_hr_salary.init()
         p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
@@ -93,3 +88,9 @@ class TestBwSalarys:
                 tax_res, period, departs.tax_departs(), filename='全年一次性奖金收入', depart_type=utils.tax_column_name)
             bw_hr_salary.export_by_depart_type(
                 tax_res, period, departs.depart_dispaly_names(), filename='全年一次性奖金收入', depart_type=utils.depart_display_column_name)
+
+    def test_pdf_export_one(self):
+        p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
+        df = bw_hr_salary.contact_info(
+            gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
+        bw_hr_salary.to_salary_pay(p.get_period_info(), departs, df)

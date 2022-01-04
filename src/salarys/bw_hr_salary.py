@@ -375,7 +375,6 @@ def to_tax_df_one(df):
 
 def to_salary_pay(period, departs, df):
     pdf_gen.create_pdf_new(period, departs, df)
-    pass
 
 
 def export_by_depart_type(df, period, departs, filename='导出文件', sheetname='Sheet1', depart_type=depart_display_column_name):
