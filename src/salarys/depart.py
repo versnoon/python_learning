@@ -81,6 +81,12 @@ class Departs:
             return self.display_names[key]
         return ""
 
+    def is_in_tax_depart(self, tax, depart):
+        for k, v in self.display_names.items():
+            if k.startswith(tax) and v == depart:
+                return True
+        return False
+
     def display_depart_names(self):
         r = dict()
         for d in self.departs:

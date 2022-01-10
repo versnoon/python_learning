@@ -257,12 +257,19 @@ class SalaryPay:
 
 def create_pdf_new(period, departs, df):
     for tex_depart in departs.tax_departs():
-        salary_pay = to_salary_pay(period, tex_depart, departs, df)
+        salary_pay = to_salary_pay(period, tex_depart, df)
         to_tax_depart_new(period, file_name(
             period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
+        for depart in departs.depart_dispaly_names():
+            t = departs.is_in_tax_depart(tex_depart, depart)
+            if t:
+                salary_pay = to_salary_pay_depart(
+                    period, tex_depart, df, depart)
+                to_tax_depart_new(period, file_name(
+                    period, depart), depart, salary_pay.sealname, salary_pay, False)
 
 
-def to_salary_pay(period, tex_depart, departs, df):
+def to_salary_pay(period, tex_depart, df):
     salary_pay = SalaryPay()
     salary_pay.period = period
     salary_pay.sealname = seal_name(tex_depart)
@@ -298,13 +305,81 @@ def to_salary_pay(period, tex_depart, departs, df):
     return salary_pay
 
 
-def create_pdfs(period, departs, merges):
-    for tex_depart, datas_by_tex_depart in merges.items():
-        merge_by_tex_depart(period.period, file_name(
-            period.period, tex_depart), tex_depart, seal_name(tex_depart), datas_by_tex_depart, departs)
-        for depart, datas_by_depart in datas_by_tex_depart.items():
-            merge(period.period, depart, file_name(
-                period.period, depart), seal_name(tex_depart), datas_by_depart, departs)
+def to_salary_pay_depart(period, tex_depart, df, depart):
+    salary_pay = SalaryPay()
+    salary_pay.period = period
+    salary_pay.sealname = seal_name(tex_depart)
+    salary_pay.depart = depart
+    tg = df.groupby(
+        [utils.tax_column_name, utils.depart_display_column_name]).sum()
+    salary_pay._total_sf = tg.loc[(tex_depart, depart), '实发合计']
+    salary_pay._yangl_gr = tg.loc[(tex_depart, depart), '工资信息-养老保险个人额度']
+    salary_pay._yangl_qy = tg.loc[(tex_depart, depart), '工资信息-养老保险企业额度']
+    salary_pay._yil_gr = tg.loc[(tex_depart, depart), '工资信息-医疗保险个人额度']
+    salary_pay._yil_qy = tg.loc[(tex_depart, depart), '工资信息-医疗保险企业额度']
+    salary_pay._sy_gr = tg.loc[(tex_depart, depart), '工资信息-失业保险个人额度']
+    salary_pay._sy_qy = tg.loc[(tex_depart, depart), '工资信息-失业保险企业额度']
+    salary_pay._gjj_gr = tg.loc[(tex_depart, depart), '工资信息-公积金个人额度']
+    salary_pay._gjj_qy = tg.loc[(tex_depart, depart), '工资信息-公积金企业额度']
+    salary_pay._nj_gr = tg.loc[(tex_depart, depart), '工资信息-企业年金个人基础缴费']
+    salary_pay._nj_qy = tg.loc[(tex_depart, depart), '工资信息-企业年金企业额度']
+    salary_pay._gs = tg.loc[(tex_depart, depart), '工资信息-工伤保险企业额度']
+    salary_pay._sy = tg.loc[(tex_depart, depart), '工资信息-生育保险企业额度']
+    tg = df.groupby([utils.tax_column_name,
+                     utils.depart_display_column_name, '银行卡信息-金融机构_工资卡']).sum()
+    total_bank_gh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国工商银行'))]
+    if not total_bank_gh_sf_df.empty:
+        salary_pay._total_bank_gh_sf = total_bank_gh_sf_df['工资信息-实发'].iloc[0]
+    total_bank_zh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国银行'))]
+    if not total_bank_zh_sf_df.empty:
+        salary_pay._total_bank_zh_sf = total_bank_zh_sf_df['工资信息-实发'].iloc[0]
+    total_bank_jh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国建设银行'))]
+    if not total_bank_jh_sf_df.empty:
+        salary_pay._total_bank_jh_sf = total_bank_jh_sf_df['工资信息-实发'].iloc[0]
+    tg = df.groupby([utils.tax_column_name,
+                     utils.depart_display_column_name, '银行卡信息-金融机构_奖金卡']).sum()
+
+    total_bank_gh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国工商银行'))]
+    if not total_bank_gh_sf_df.empty:
+        salary_pay._total_bank_gh_sf += total_bank_gh_sf_df['奖金信息-实发'].iloc[0]
+    total_bank_zh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国银行'))]
+    if not total_bank_zh_sf_df.empty:
+        salary_pay._total_bank_zh_sf += total_bank_zh_sf_df['奖金信息-实发'].iloc[0]
+    total_bank_jh_sf_df = tg.loc[(tg.index.get_level_values(
+        0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('中国建设银行'))]
+    if not total_bank_jh_sf_df.empty:
+        salary_pay._total_bank_jh_sf += total_bank_jh_sf_df['奖金信息-实发'].iloc[0]
+
+    tg = df.groupby(
+        [utils.tax_column_name, utils.depart_display_column_name, '公积金信息-公积金方案']).sum()
+    if '马鞍山钢铁股份有限公司（总部）' == tex_depart:
+        total_gjj_gh_df = tg.loc[(tg.index.get_level_values(
+            0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('马鞍山钢铁股份有限公司（总部）公积金方案_1'))]
+
+        if not total_gjj_gh_df.empty:
+            salary_pay._total_gjj_gh = total_gjj_gh_df['工资信息-公积金个人额度'].iloc[0] + \
+                total_gjj_gh_df['工资信息-公积金企业额度'].iloc[0]
+        total_gjj_jh_df = tg.loc[(tg.index.get_level_values(
+            0).str.startswith(tex_depart)) & (tg.index.get_level_values(1).str.startswith(depart)) & (tg.index.get_level_values(2).str.startswith('马鞍山钢铁股份有限公司（总部）公积金方案_2'))]
+
+        if not total_gjj_jh_df.empty:
+            salary_pay._total_gjj_jh = total_gjj_jh_df['工资信息-公积金个人额度'].iloc[0] + \
+                total_gjj_jh_df['工资信息-公积金企业额度'].iloc[0]
+    return salary_pay
+
+
+# def create_pdfs(period, departs, merges):
+#     for tex_depart, datas_by_tex_depart in merges.items():
+#         merge_by_tex_depart(period.period, file_name(
+#             period.period, tex_depart), tex_depart, seal_name(tex_depart), datas_by_tex_depart, departs)
+#         for depart, datas_by_depart in datas_by_tex_depart.items():
+#             merge(period.period, depart, file_name(
+#                 period.period, depart), seal_name(tex_depart), datas_by_depart, departs)
 
 
 def file_name(period, depart):
@@ -574,7 +649,7 @@ def create_table_styles(sealname, departname):
     if 'gf' == sealname:
         return gf_table_styles()
     else:
-        if 'C2_新闻中心' == departname or 'C5_教培中心' == departname:
+        if '新闻中心' == departname or '教培中心' == departname:
             return jtqt_table_styles()
         return jtbb_table_styles()
 
@@ -605,7 +680,7 @@ def create_salary_pay_app_form(salarypay: SalaryPay, filename, hz=False):
             filepath(filename_temp, period, ["系统导出", departname]), pagesize=A4)
     else:
         doc = SimpleDocTemplate(
-            filepath(filename_temp, period, [departname]), pagesize=A4)
+            filepath(filename_temp, period, ["系统导出", departname]), pagesize=A4)
 
     elements = []
     elements.append(title_p1)
@@ -632,8 +707,8 @@ def create_seal_pdf(sealname):
     return sealname_temp
 
 
-def to_tax_depart_new(period, filename, tex_depart, sealname, salary_pay):
-    filename_temp = create_salary_pay_app_form(salary_pay, filename, True)
+def to_tax_depart_new(period, filename, tex_depart, sealname, salary_pay, hz=True):
+    filename_temp = create_salary_pay_app_form(salary_pay, filename, hz)
     sealname_temp = create_seal_pdf(sealname)
     op_pdf = PdfFileWriter()
     pay_pdf = PdfFileReader(
@@ -648,41 +723,42 @@ def to_tax_depart_new(period, filename, tex_depart, sealname, salary_pay):
         op_pdf.write(out)
 
 
-def merge_by_tex_depart(period, filename, tex_depart, sealname, merges, departs):
-    salary_pay = SalaryPay().to_salary_pay_group_by_tex_depart(
-        period, tex_depart, sealname, merges, departs)
-    filename_temp = create_salary_pay_app_form(salary_pay, filename, True)
-    sealname_temp = create_seal_pdf(sealname)
-    op_pdf = PdfFileWriter()
-    pay_pdf = PdfFileReader(
-        open(filepath(filename_temp, period, ['汇总数据', tex_depart]), 'rb'))
-    seal_pdf = PdfFileReader(open(filepath(sealname_temp), 'rb'))
-    page = pay_pdf.getPage(0)
-    page.mergePage(seal_pdf.getPage(0))
-    page.compressContentStreams()  # 压缩内容
-    op_pdf.addPage(page)
+# def merge_by_tex_depart(period, filename, tex_depart, sealname, merges, departs):
+#     salary_pay = SalaryPay().to_salary_pay_group_by_tex_depart(
+#         period, tex_depart, sealname, merges, departs)
+#     filename_temp = create_salary_pay_app_form(salary_pay, filename, True)
+#     sealname_temp = create_seal_pdf(sealname)
+#     op_pdf = PdfFileWriter()
+#     pay_pdf = PdfFileReader(
+#         open(filepath(filename_temp, period, ['汇总数据', tex_depart]), 'rb'))
+#     seal_pdf = PdfFileReader(open(filepath(sealname_temp), 'rb'))
+#     page = pay_pdf.getPage(0)
+#     page.mergePage(seal_pdf.getPage(0))
+#     page.compressContentStreams()  # 压缩内容
+#     op_pdf.addPage(page)
 
-    with open(filepath(filename, period, ['汇总数据', tex_depart]), 'wb') as out:
-        op_pdf.write(out)
+#     with open(filepath(filename, period, ['汇总数据', tex_depart]), 'wb') as out:
+#         op_pdf.write(out)
 
 
-def merge(period, depart, filename, sealname, merges, departs):
-    salary_pay = SalaryPay().to_salary_pay_group_by_depart(
-        period, depart,  sealname, merges, departs)
-    filename_temp = create_salary_pay_app_form(salary_pay, filename)
-    sealname_temp = create_seal_pdf(sealname)
-    op_pdf = PdfFileWriter()
-    pay_pdf = PdfFileReader(
-        open(filepath(filename_temp, period, [depart]), 'rb'))
-    seal_pdf = PdfFileReader(open(filepath(sealname_temp), 'rb'))
-    page = pay_pdf.getPage(0)
-    page.mergePage(seal_pdf.getPage(0))
-    page.compressContentStreams()  # 压缩内容
-    op_pdf.addPage(page)
+# def merge(period, depart, filename, sealname, merges, departs):
+#     salary_pay = SalaryPay().to_salary_pay_group_by_depart(
+#         period, depart,  sealname, merges, departs)
+#     filename_temp = create_salary_pay_app_form(salary_pay, filename)
+#     sealname_temp = create_seal_pdf(sealname)
+#     op_pdf = PdfFileWriter()
+#     pay_pdf = PdfFileReader(
+#         open(filepath(filename_temp, period, [depart]), 'rb'))
+#     seal_pdf = PdfFileReader(open(filepath(sealname_temp), 'rb'))
+#     page = pay_pdf.getPage(0)
+#     page.mergePage(seal_pdf.getPage(0))
+#     page.compressContentStreams()  # 压缩内容
+#     op_pdf.addPage(page)
 
-    with open(filepath(filename, period, [depart]), 'wb') as out:
-        op_pdf.write(out)
+#     with open(filepath(filename, period, [depart]), 'wb') as out:
+#         op_pdf.write(out)
 
 
 if __name__ == '__main__':
-    merge('202106', '01_集团机关', "demo", "gf", {}, {})
+    pass
+    # merge('202106', '01_集团机关', "demo", "gf", {}, {})

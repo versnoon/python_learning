@@ -15,8 +15,8 @@ import src.salarys.utils as utils
 
 def done():
     # 加载数据
-    period, departs, gzs, jjs, banks, jobs, persons, tax, taxOne, gjjs = s_infos.load_data_to_frame()
-
+    p, departs, gzs, jjs, banks, jobs, persons, tax, taxOne, gjjs = s_infos.load_data_to_frame()
+    period = p.get_period_info()
     # 合并数据
     # banks.df.to_excel('bank.xlsx')
     df = s_infos.contact_info(gzs=gzs, jjs=jjs, banks=banks, jobs=jobs,
@@ -29,13 +29,17 @@ def done():
         # 根据显示单位分别数据
         s_infos.export_errs_by_depart_type(
             period, errs, departs.depart_dispaly_names())
-    # 输出各类数据
-    # else:
-    #     s_infos.export(gzs, jjs, df)
-    sap_df = s_infos.to_sap_frame(df)
-    sap_df.to_excel(f'{period}_sh002.xls')
-    tax_res = b_infos.to_tax_df(df, b_infos.format_tax_data)
-    b_infos.export_by_depart_type(
-        tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
-    b_infos.export_by_depart_type(
-        tax_res, period, departs.depart_dispaly_names(), filename='工资薪金所得', depart_type=utils.depart_display_column_name)
+    else:
+        # sap_df = s_infos.to_sap_frame(df)
+        tax_res = b_infos.to_tax_df(df, b_infos.format_tax_data)
+        b_infos.export_by_depart_type(
+            tax_res, period, departs.tax_departs(), filename='工资薪金所得', depart_type=utils.tax_column_name)
+        b_infos.export_by_depart_type(
+            tax_res, period, departs.depart_dispaly_names(), filename='工资薪金所得', depart_type=utils.depart_display_column_name)
+        if s_infos.get_column_name(s_infos.SalaryJjs.name, '年底兑现奖') in df.columns:
+            tax_res = b_infos.to_tax_df_one(df)
+            b_infos.export_by_depart_type(
+                tax_res, period, departs.tax_departs(), filename='全年一次性奖金收入', depart_type=utils.tax_column_name)
+            b_infos.export_by_depart_type(
+                tax_res, period, departs.depart_dispaly_names(), filename='全年一次性奖金收入', depart_type=utils.depart_display_column_name)
+        b_infos.to_salary_pay(p.get_period_info(), departs, df)
