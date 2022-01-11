@@ -14,9 +14,15 @@ import src.salarys.done as run
 
 
 if __name__ == '__main__':
-    starttime = datetime.datetime.now()
-    print('start')
-    run.done()
-    endtime = datetime.datetime.now()
-    print(endtime - starttime)
+    # starttime = datetime.datetime.now()
+    # ----  人员信息对比
+    # run.compare_person()
+
+    # ----  数据效验
+    run.audit()
+
+    # ----  导出拨款单
+    # run.to_salary_pdf()
+    # endtime = datetime.datetime.now()
+    # print(endtime - starttime)
     print('done')

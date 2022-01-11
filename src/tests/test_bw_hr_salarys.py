@@ -93,7 +93,6 @@ class TestBwSalarys:
         p, departs, persons, gzs, jjs, banks, tax, taxOne, gjjs = bw_hr_salary.load_data()
         df = bw_hr_salary.contact_info(
             gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
-        df.to_excel('df.xlsx')
         bw_hr_salary.to_salary_pay(p.get_period_info(), departs, df)
 
     def test_person_compare(self):

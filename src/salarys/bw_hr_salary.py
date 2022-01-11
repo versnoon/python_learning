@@ -217,20 +217,26 @@ def load_gz_by_period(period):
     return SalaryGzs(period, departs)
 
 
-def person_compare(period, c_df, p_df, departs, depart_type=depart_display_column_name, filename='人员变化信息'):
+def person_compare(period, c_df, p_df, departs, depart_type=depart_display_column_name, filename='人员变化信息', depart='人力资源服务中心1'):
     coulmns = [utils.depart_display_column_name, utils.tax_column_name, utils.depart_column_name,
                utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), get_column_name(BwSalaryPersons.name, utils.person_id_column_name), get_column_name(BwSalaryPersons.name, '手机号码'), get_column_name(BwSalaryPersons.name, '在职状态'), get_column_name(SalaryGzs.name, '养老保险个人额度'), get_column_name(SalaryGzs.name, '失业保险个人额度'), get_column_name(SalaryGzs.name, '医疗保险个人额度'), get_column_name(SalaryGzs.name, '公积金个人额度'), get_column_name(SalaryGzs.name, '企业年金个人基础缴费')]
+    subset_columns = [utils.depart_display_column_name,
+                      utils.tax_column_name, utils.code_info_column_name]
+    if depart_type == tax_column_name:
+        subset_columns = [utils.tax_column_name, utils.code_info_column_name]
+    if depart_type == depart_column_name:
+        if depart:
+            subset_columns = [utils.depart_column_name,
+                              utils.code_info_column_name]
     for depart in departs:
         c = c_df[coulmns]
         p = p_df[coulmns]
         c = split_by_depart_type_all(c, depart, depart_type)
         p = split_by_depart_type_all(p, depart, depart_type)
         add_df = pd.concat([c, p, p])
-        add_df = add_df.drop_duplicates(subset=[utils.depart_display_column_name,
-                                                utils.tax_column_name, utils.code_info_column_name], keep=False)
+        add_df = add_df.drop_duplicates(subset=subset_columns, keep=False)
         mv_df = pd.concat([p, c, c])
-        mv_df = mv_df.drop_duplicates(subset=[utils.depart_display_column_name,
-                                              utils.tax_column_name, utils.code_info_column_name], keep=False)
+        mv_df = mv_df.drop_duplicates(subset=subset_columns, keep=False)
         file_dir = get_export_path(period, [depart])
         file_name = f"{period}_{depart}_{filename}.xlsx"
         file_p = file_path(file_dir, file_name)

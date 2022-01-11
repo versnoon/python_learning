@@ -447,9 +447,8 @@ def validator_id_info(df):
 
 def validator_gjj(df):
     val_dict = {}
-    if get_column_name(SalaryGzs.name, "公积金方案") in df.columns:
-        res = df[df[get_column_name(
-            SalaryGjj.name, utils.gjj_v_column_name)] == 'ERR']
+    if get_column_name(SalaryGjj.name, "公积金方案") in df.columns:
+        res = df[df[utils.gjj_v_column_name] == 'ERR']
         if not res.empty:
             res = export_columns(res)
             val_dict['公积金方案设置错误'] = res.copy()
