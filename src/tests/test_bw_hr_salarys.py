@@ -95,3 +95,24 @@ class TestBwSalarys:
             gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
         df.to_excel('df.xlsx')
         bw_hr_salary.to_salary_pay(p.get_period_info(), departs, df)
+
+    def test_person_compare(self):
+        current_p = bw_hr_salary.load_period()
+
+        c_period = current_p.get_period_info()
+        p_period = current_p.get_pre_period_info()
+        c_gz = bw_hr_salary.load_gz_by_period(c_period)
+        c_persons = bw_hr_salary.load_person_info(c_period)
+        c = bw_hr_salary.contact_id_info(c_gz.df, c_persons)
+        p_gz = bw_hr_salary.load_gz_by_period(p_period)
+        p_persons = bw_hr_salary.load_person_info(p_period)
+        p = bw_hr_salary.contact_id_info(p_gz.df, p_persons)
+        departs = bw_hr_salary.load_depart(c_period)
+        # 增加的人
+
+        # 分单位导出
+        bw_hr_salary.person_compare(
+            c_period, c_gz.df, p_gz.df, departs.depart_dispaly_names())
+        # 分税务单位导出
+        bw_hr_salary.person_compare(
+            c_period, c, p, departs.tax_departs(), depart_type=utils.tax_column_name)

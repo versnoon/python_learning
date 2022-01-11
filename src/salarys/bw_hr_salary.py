@@ -212,12 +212,47 @@ def load_period():
     return Period()
 
 
+def load_gz_by_period(period):
+    departs = load_depart(period=period)
+    return SalaryGzs(period, departs)
+
+
+def person_compare(period, c_df, p_df, departs, depart_type=depart_display_column_name, filename='人员变化信息'):
+    coulmns = [utils.depart_display_column_name, utils.tax_column_name, utils.depart_column_name,
+               utils.code_info_column_name, get_column_name(SalaryGzs.name, utils.name_info_column_name), get_column_name(BwSalaryPersons.name, utils.person_id_column_name), get_column_name(BwSalaryPersons.name, '手机号码'), get_column_name(BwSalaryPersons.name, '在职状态'), get_column_name(SalaryGzs.name, '养老保险个人额度'), get_column_name(SalaryGzs.name, '失业保险个人额度'), get_column_name(SalaryGzs.name, '医疗保险个人额度'), get_column_name(SalaryGzs.name, '公积金个人额度'), get_column_name(SalaryGzs.name, '企业年金个人基础缴费')]
+    for depart in departs:
+        c = c_df[coulmns]
+        p = p_df[coulmns]
+        c = split_by_depart_type_all(c, depart, depart_type)
+        p = split_by_depart_type_all(p, depart, depart_type)
+        add_df = pd.concat([c, p, p])
+        add_df = add_df.drop_duplicates(subset=[utils.depart_display_column_name,
+                                                utils.tax_column_name, utils.code_info_column_name], keep=False)
+        mv_df = pd.concat([p, c, c])
+        mv_df = mv_df.drop_duplicates(subset=[utils.depart_display_column_name,
+                                              utils.tax_column_name, utils.code_info_column_name], keep=False)
+        file_dir = get_export_path(period, [depart])
+        file_name = f"{period}_{depart}_{filename}.xlsx"
+        file_p = file_path(file_dir, file_name)
+        writer = pd.ExcelWriter(file_p)
+        if not add_df.empty:
+            add_df.to_excel(writer, '新增人员信息')
+        if not mv_df.empty:
+            mv_df.to_excel(writer, '减员人员信息')
+        if not add_df.empty or not mv_df.empty:
+            writer.save()
+
+
 def load_depart(period):
     return Departs(period)
 
 
 def load_person_info(period):
     return BwSalaryPersons(period)
+
+
+def load_current_period():
+    return load_period()
 
 
 def load_data():
@@ -391,6 +426,13 @@ def split_by_depart_type(df, depart, depart_type):
     res = df[df[depart_type] == depart]
     if not res.empty:
         return res.iloc[:, :-2]
+    return pd.DataFrame()
+
+
+def split_by_depart_type_all(df, depart, depart_type):
+    res = df[df[depart_type] == depart]
+    if not res.empty:
+        return res
     return pd.DataFrame()
 
 
