@@ -48,8 +48,14 @@ jigou_column_name = '机构全路径'
 
 gjj_v_column_name = '公积金验证'
 
-max_gjj = 2410  # 公积金上限
+max_gjj = 2679  # 公积金上限
 max_nj = 894  # 年金上限
+
+err_folder_name = '审核错误信息'
+tax_folder_name = '税务系统_工资薪金所得'
+pdf_folder_name = '拨款单'
+person_compare_folder_name = '人员上下月对比'
+sap_folder_name = 'sap格式数据'
 
 
 def root_dir_() -> str:
@@ -80,6 +86,7 @@ def file_path(path, filename) -> str:
 def clear_folder_by_paths(path):
     if os.path.exists(path):
         shutil.rmtree(path)
+    make_folder_if_nessage(path)
 
 
 def make_folder_if_nessage(path) -> str:

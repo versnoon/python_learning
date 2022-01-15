@@ -19,10 +19,13 @@ if __name__ == '__main__':
     # run.compare_person()
 
     # ----  数据效验
-    run.audit()
+    # run.audit()
 
     # ----  导出拨款单
-    # run.to_salary_pdf()
+    # run.salary_pdf()
+
+    # ---- 导出sap格式数据
+    run.sap_info_export()
     # endtime = datetime.datetime.now()
     # print(endtime - starttime)
     print('done')

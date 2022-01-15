@@ -115,3 +115,11 @@ class TestBwSalarys:
         # 分税务单位导出
         bw_hr_salary.person_compare(
             c_period, c, p, departs.tax_departs(), depart_type=utils.tax_column_name)
+
+    def test_person_merge(self):
+        current_p = bw_hr_salary.load_period()
+        c_persons = bw_hr_salary.load_person_info(current_p.get_period_info())
+        df = c_persons.df
+        df.to_excel('person.xlsx')
+        assert not df.empty
+        assert not df[df[utils.code_info_column_name] == 'M31972'].empty

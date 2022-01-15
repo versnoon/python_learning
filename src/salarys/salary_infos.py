@@ -10,6 +10,7 @@
 
 
 import pandas as pd
+from pandas._libs.missing import NA
 import src.salarys.data_read as prx
 import src.salarys.utils as utils
 import src.salarys.period as period_op
@@ -76,7 +77,7 @@ class SalaryBaseInfo:
 
         # 规范关键字段的字段名称
         self.df.rename(
-            columns={'通行证': utils.code_info_column_name, '工号': utils.code_info_column_name, '部门': utils.depart_info_column_name, '所在机构': utils.depart_info_column_name, '所属机构': utils.depart_info_column_name, '机构名称': utils.depart_info_column_name, '银行卡号': '卡号', '企业年金个人额度': '企业年金个人基础缴费'},  inplace=True)
+            columns={'宝武通行证': utils.code_info_column_name, '通行证': utils.code_info_column_name, '工号': utils.code_info_column_name, '部门': utils.depart_info_column_name, '所在机构': utils.depart_info_column_name, '所属机构': utils.depart_info_column_name, '机构名称': utils.depart_info_column_name, '银行卡号': '卡号', '企业年金个人额度': '企业年金个人基础缴费'},  inplace=True)
 
         self.df.rename(columns=lambda x: get_column_name(
             self.name, x), inplace=True)
@@ -425,8 +426,8 @@ def validator_sf_info(df):
 def validator_tax_info(df):
     val_dict = {}
     if "个税调整_值" in df.columns:
-        # res = df[(df["个税调整_值"].isna()) | (df["个税调整_值"].round(2) != 0)]
-        res = df
+        res = df[(df["个税调整_值"].isna()) | (df["个税调整_值"].round(2) != 0)]
+        # res = df
         if not res.empty:
             res = export_columns(
                 res, ['证件号码', utils.suodeshui_column_name, '累计应补(退)税额', '个税调整_值'])
@@ -524,11 +525,12 @@ def export_columns(df, other=[]):
 def get_export_path(period,  paths=[]):
     ps = [period, '系统导出']
     ps.extend(paths)
-    return utils.join_path(ps)
+    path = utils.join_path(ps)
+    return path
 
 
 def export_all_errs(period, errs):
-    file_dir = get_export_path(period, ['汇总数据'])
+    file_dir = get_export_path(period, [utils.err_folder_name, '汇总数据'])
     file_name = f"{period}_效验结果.xlsx"
     writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
     for name, df in errs.items():
@@ -538,7 +540,7 @@ def export_all_errs(period, errs):
 
 def export_errs_by_depart_type(period, errs, departs, depart_type=utils.depart_display_column_name):
     for depart in departs:
-        file_dir = get_export_path(period, [depart])
+        file_dir = get_export_path(period, [utils.err_folder_name, depart])
         file_name = f"{period}_{depart}_效验结果.xlsx"
 
         depart_err = split_by_depart_type(errs, depart, depart_type)
@@ -559,22 +561,44 @@ def split_by_depart_type(errs, depart, depart_type=utils.depart_display_column_n
 
 
 def merge_gz_and_jj(gz_infos, jj_infos):
+
     if not gz_infos.df.empty and not jj_infos.df.empty:
         df = pd.merge(gz_infos.df, jj_infos.df, on=[
             utils.code_info_column_name, utils.tax_column_name, utils.depart_display_column_name], how='outer', suffixes=['_工资', '_奖金'], copy=True)
-        append_yingf_shif_shui(df)
-        return df
+
     elif not gz_infos.df.empty and jj_infos.df.empty:
-        return gz_infos.df
+        df = gz_infos.df
     elif gz_infos.df.empty and not jj_infos.df.empty:
-        return jj_infos.df
+        df = jj_infos.df
+    append_yingf_shif_shui(df)
+    return df
 
 
 def append_yingf_shif_shui(df):
-    df[utils.yingfa_column_name] = df[get_column_name(
-        SalaryGzs.name, "应发")].add(df[get_column_name(SalaryJjs.name, "应发")], fill_value=0)
-    df[utils.shifa_column_name] = df[get_column_name(
-        SalaryGzs.name, "实发")] .add(df[get_column_name(SalaryJjs.name, "实发")], fill_value=0)
+    if get_column_name(SalaryGzs.name, "应发") in df.columns and get_column_name(SalaryJjs.name, "应发") in df.columns:
+        df[utils.yingfa_column_name] = df[get_column_name(
+            SalaryGzs.name, "应发")].add(df[get_column_name(SalaryJjs.name, "应发")], fill_value=0)
+    elif get_column_name(SalaryGzs.name, "应发") in df.columns and not get_column_name(SalaryJjs.name, "应发") in df.columns:
+        df[utils.yingfa_column_name] = df[get_column_name(
+            SalaryGzs.name, "应发")]
+    elif not get_column_name(SalaryGzs.name, "应发") in df.columns and get_column_name(SalaryJjs.name, "应发") in df.columns:
+        df[utils.yingfa_column_name] = df[get_column_name(
+            SalaryJjs.name, "应发")]
+    else:
+        df[utils.yingfa_column_name] = pd.NA
+
+    if get_column_name(SalaryGzs.name, "实发") in df.columns and get_column_name(SalaryJjs.name, "实发") in df.columns:
+        df[utils.shifa_column_name] = df[get_column_name(
+            SalaryGzs.name, "实发")].add(df[get_column_name(SalaryJjs.name, "实发")], fill_value=0)
+    elif get_column_name(SalaryGzs.name, "实发") in df.columns and not get_column_name(SalaryJjs.name, "实发") in df.columns:
+        df[utils.shifa_column_name] = df[get_column_name(
+            SalaryGzs.name, "实发")]
+    elif not get_column_name(SalaryGzs.name, "实发") in df.columns and get_column_name(SalaryJjs.name, "实发") in df.columns:
+        df[utils.shifa_column_name] = df[get_column_name(
+            SalaryJjs.name, "实发")]
+    else:
+        df[utils.shifa_column_name] = pd.NA
+
     if get_column_name(SalaryJjs.name, "个调税") in df.columns and get_column_name(SalaryGzs.name, "个调税") in df.columns:
         if get_column_name(SalaryJjs.name, "个税调整") in df.columns:
             df[utils.suodeshui_column_name_o] = (df.loc[:, [get_column_name(
@@ -585,17 +609,27 @@ def append_yingf_shif_shui(df):
         df[utils.suodeshui_column_name_o] = df[utils.suodeshui_column_name_o].apply(
             gts)
     if get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金") in df.columns and get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金") in df.columns:
-        df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
-            SalaryGzs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金")]].sum(axis=1))
-
+        df.fillna({get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金"): 0,
+                   get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金"): 0}, inplace=True)
+        df[utils.suodeshui_column_name] = df[get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金")].add(
+            df[get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金")], fill_value=0)
+    elif not get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金") in df.columns and get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金") in df.columns:
+        df[utils.suodeshui_column_name] = df[get_column_name(
+            SalaryGzs.name, "应扣缴税额_正常工资薪金")]
+    elif get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金") in df.columns and not get_column_name(SalaryGzs.name, "应扣缴税额_正常工资薪金") in df.columns:
+        df[utils.suodeshui_column_name] = df[get_column_name(
+            SalaryJjs.name, "应扣缴税额_正常工资薪金")]
+    else:
+        df[utils.suodeshui_column_name] = pd.NA
     if get_column_name(SalaryJjs.name, "应纳税额_全年一次性奖金") in df.columns:
-        # df[utils.yingfa_column_name] = df[utils.yingfa_column_name] .sub(
-        #     df[get_column_name(SalaryJjs.name, "应纳税额_全年一次性奖金")], fill_value=0)
-        df[utils.suodeshui_column_name] = (df.loc[:, [get_column_name(
-            SalaryGzs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应扣缴税额_正常工资薪金"), get_column_name(SalaryJjs.name, "应纳税额_全年一次性奖金")]].sum(axis=1))
+        df.fillna(
+            {get_column_name(SalaryJjs.name, "应纳税额_全年一次性奖金"): 0}, inplace=True)
+        df[utils.suodeshui_column_name] += df[get_column_name(
+            SalaryJjs.name, "应纳税额_全年一次性奖金")]
 
-    df[utils.suodeshui_column_name] = df[utils.suodeshui_column_name].add(
-        df[utils.suodeshui_column_name_o], fill_value=0)
+    if utils.suodeshui_column_name_o in df.columns:
+        df[utils.suodeshui_column_name] = df[utils.suodeshui_column_name].add(
+            df[utils.suodeshui_column_name_o], fill_value=0)
     if get_column_name(SalaryGzs.name, '兼课带教费') in df.columns and get_column_name(SalaryGzs.name, '驻外津贴') in df.columns:
         df[utils.shouru_column_name] = (df.loc[:, [utils.yingfa_column_name, get_column_name(
             SalaryGzs.name, "兼课带教费"), get_column_name(SalaryGzs.name, "驻外津贴")]].sum(axis=1))
@@ -611,10 +645,12 @@ def append_yingf_shif_shui(df):
         df[utils.shouru_column_name] = df[utils.shouru_column_name].sub(
             df[get_column_name(SalaryJjs.name, '年底兑现奖')], fill_value=0)
 
-    df.loc[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.depart_info_column_name)
-           ] = df[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.depart_info_column_name)]
-    df.loc[df[get_column_name(SalaryGzs.name, utils.name_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.name_info_column_name)] = df[df[get_column_name(
-        SalaryGzs.name, utils.name_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.name_info_column_name)]
+    if get_column_name(SalaryGzs.name, utils.depart_info_column_name) in df.columns and get_column_name(SalaryJjs.name, utils.depart_info_column_name) in df.columns:
+        df.loc[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.depart_info_column_name)
+               ] = df[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.depart_info_column_name)]
+    if get_column_name(SalaryGzs.name, utils.name_info_column_name) in df.columns and get_column_name(SalaryJjs.name, utils.depart_info_column_name) in df.columns:
+        df.loc[df[get_column_name(SalaryGzs.name, utils.name_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.name_info_column_name)] = df[df[get_column_name(
+            SalaryGzs.name, utils.name_info_column_name)].isnull()][get_column_name(SalaryJjs.name, utils.name_info_column_name)]
     return df
 
 
@@ -926,6 +962,9 @@ def to_sap_frame(df):
         df, get_column_name(SalaryJjs.name, "科技奖励"))
     sap_df["外派人员履职待遇"] = get_df_values(
         df, get_column_name(SalaryJjs.name, "外派人员履职待遇"))
+    sap_df[utils.tax_column_name] = get_df_values(df, utils.tax_column_name)
+    sap_df[utils.depart_display_column_name] = get_df_values(
+        df, utils.depart_display_column_name)
     # 护士长津贴	外语津贴	班组长津贴	科技津贴	能手津贴	基本奖金	单项奖1	单项奖2	单项奖3	法定节日加班工资	公休日加班工资	平时加班工资
     # 缺勤扣款合计	公积金	养老保险	医疗保险缴	失业保险
     # 养老保险补缴	医疗保险补缴	失业保险补缴	年金	工资税收	水利基金	财务扣款

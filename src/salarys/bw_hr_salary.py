@@ -237,15 +237,16 @@ def person_compare(period, c_df, p_df, departs, depart_type=depart_display_colum
         add_df = add_df.drop_duplicates(subset=subset_columns, keep=False)
         mv_df = pd.concat([p, c, c])
         mv_df = mv_df.drop_duplicates(subset=subset_columns, keep=False)
-        file_dir = get_export_path(period, [depart])
+        file_dir = get_export_path(
+            period, [utils.person_compare_folder_name, depart])
         file_name = f"{period}_{depart}_{filename}.xlsx"
         file_p = file_path(file_dir, file_name)
-        writer = pd.ExcelWriter(file_p)
-        if not add_df.empty:
-            add_df.to_excel(writer, '新增人员信息')
-        if not mv_df.empty:
-            mv_df.to_excel(writer, '减员人员信息')
         if not add_df.empty or not mv_df.empty:
+            writer = pd.ExcelWriter(file_p)
+            if not add_df.empty:
+                add_df.to_excel(writer, '新增人员信息')
+            if not mv_df.empty:
+                mv_df.to_excel(writer, '减员人员信息')
             writer.save()
 
 
@@ -298,8 +299,9 @@ def contact_gjj_info(df, gjjs):
 
 
 def contact_gjj_validate(df, departs):
-    df[utils.gjj_v_column_name] = df.apply(lambda x: departs.get_bw__gjj_fangan(
-        x[utils.tax_column_name], x[get_column_name(SalaryGjj.name, '公积金方案')], x[utils.depart_display_column_name]), axis=1)
+    if get_column_name(SalaryGjj.name, '公积金方案') in df.columns:
+        df[utils.gjj_v_column_name] = df.apply(lambda x: departs.get_bw__gjj_fangan(
+            x[utils.tax_column_name], x[get_column_name(SalaryGjj.name, '公积金方案')], x[utils.depart_display_column_name]), axis=1)
     return df.copy()
 
 
@@ -418,9 +420,11 @@ def to_salary_pay(period, departs, df):
     pdf_gen.create_pdf_new(period, departs, df)
 
 
-def export_by_depart_type(df, period, departs, filename='导出文件', sheetname='Sheet1', depart_type=depart_display_column_name):
+def export_by_depart_type(df, period, departs, filename='导出文件', sheetname='Sheet1', depart_type=depart_display_column_name, export_folder_name=''):
     for depart in departs:
         file_dir = get_export_path(period, [depart])
+        if export_folder_name:
+            file_dir = get_export_path(period, [export_folder_name, depart])
         file_name = f"{period}_{depart}_{filename}.xlsx"
         depart_df = split_by_depart_type(df, depart, depart_type)
         if not depart_df.empty:
