@@ -8,7 +8,7 @@
 @Contact :   tongtan@gmail.com
 '''
 
-from src.salarys import bw_hr_salary
+from src.salarys import bw_hr_salary, pdf_gen
 from src.salarys import salary_infos
 from src.salarys import utils
 from src.salarys import bw_salary_modes
@@ -120,6 +120,5 @@ class TestBwSalarys:
         current_p = bw_hr_salary.load_period()
         c_persons = bw_hr_salary.load_person_info(current_p.get_period_info())
         df = c_persons.df
-        df.to_excel('person.xlsx')
         assert not df.empty
-        assert not df[df[utils.code_info_column_name] == 'M31972'].empty
+        assert not df[df[utils.code_info_column_name] == 'M99999'].empty

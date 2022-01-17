@@ -257,10 +257,9 @@ class SalaryPay:
 
 def create_pdf_new(period, departs, df):
     for tex_depart in departs.tax_departs():
-        if tex_depart == '马鞍山钢铁股份有限公司（总部）':
-            salary_pay = to_salary_pay(period, tex_depart, df)
-            to_tax_depart_new(period, file_name(
-                period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
+        salary_pay = to_salary_pay(period, tex_depart, df)
+        to_tax_depart_new(period, file_name(
+            period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
         for depart in departs.depart_dispaly_names():
             t = departs.is_in_tax_depart(tex_depart, depart)
             if t:
@@ -333,11 +332,9 @@ def to_salary_pay_depart(period, tex_depart, df, depart):
         tgx = df.groupby(
             [utils.tax_column_name, utils.depart_display_column_name, utils.depart_column_name, '银行卡信息-金融机构_工资卡']).sum()
 
-        tgx.to_excel(f'{depart}-工资卡-xxxx.xlsx')
         tgx = df.groupby(
             [utils.tax_column_name, utils.depart_display_column_name, utils.depart_column_name, '银行卡信息-金融机构_奖金卡']).sum()
 
-        tgx.to_excel(f'{depart}-奖金卡-xxxx.xlsx')
         salary_pay._total_sf = tg.loc[(tex_depart, depart), '实发合计']
         if '工资信息-养老保险个人额度' in df.columns:
             salary_pay._yangl_gr = tg.loc[(
@@ -443,6 +440,7 @@ def filepath(filename, period='', foldername=[]):
     if len(foldername) > 0:
         for f in foldername:
             path = join(path, f)
+    utils.make_folder_if_nessage(path)
     return join(path, r'{}{}'.format(filename, '.pdf'))
 
 
@@ -474,9 +472,9 @@ def create_table_data(salarypay: SalaryPay):
     if 'gf' == sealname:
         return gf_table_data(salarypay)
     else:
-        if 'C2_新闻中心' == departname:
+        if '新闻中心' == departname:
             return jtxw_table_data(salarypay)
-        elif 'C5_教培中心' == departname:
+        elif '教培中心' == departname:
             return jtay_table_data(salarypay)
         return jtbb_table_data(salarypay)
 
@@ -709,13 +707,8 @@ def create_salary_pay_app_form(salarypay: SalaryPay, filename, hz=False):
     table = Table(data=data, style=table_styles,
                   colWidths=(0.5*inch, 1.8*inch, 1.5*inch, 1.5*inch, 1.5*inch))
     filename_temp = r'{}{}'.format(filename, '_temp')
-    doc = None
-    if hz:
-        doc = SimpleDocTemplate(
-            filepath(filename_temp, period, ["系统导出", departname]), pagesize=A4)
-    else:
-        doc = SimpleDocTemplate(
-            filepath(filename_temp, period, ["系统导出", departname]), pagesize=A4)
+    doc = SimpleDocTemplate(
+        filepath(filename_temp, period, ["系统导出", utils.pdf_folder_name, departname]), pagesize=A4)
 
     elements = []
     elements.append(title_p1)
@@ -725,6 +718,42 @@ def create_salary_pay_app_form(salarypay: SalaryPay, filename, hz=False):
     elements.append(period_p)
     elements.append(Spacer(0, 0.2*inch))
     elements.append(table)
+
+    doc.build(elements)
+
+    return filename_temp
+
+
+def create_salary_pay_app_form_1():
+    # 创建薪酬发放申请单pdf文件
+
+    init_tff()
+    default_styles = get_styles()
+    period, sealname, departname = '202201', 'jt', '集团机关'
+    title_p1 = Paragraph(departname, default_styles['p_title'])
+    title_p2 = Paragraph("{}工资费用资金调拨单".format(
+        period), default_styles['p_title'])
+
+    period_p = Paragraph("申请日期:  {}".format(
+        period), default_styles['p_period'])
+
+    # table
+    # data = create_table_data(salarypay)
+
+    table_styles = create_table_styles(sealname, departname)
+    # table = Table(data=data, style=table_styles,
+    #               colWidths=(0.5*inch, 1.8*inch, 1.5*inch, 1.5*inch, 1.5*inch))
+    filename_temp = r'{}{}'.format('调拨但', '_temp')
+    doc = SimpleDocTemplate(
+        "D:\\薪酬审核文件夹\\202201\\系统导出\\拨款单\\马钢（集团）控股有限公司(总部)\\马钢（集团）控股有限公司(总部)202201工资费用资金调拨单_temp.pdf", pagesize=A4)
+
+    elements = []
+    elements.append(title_p1)
+    elements.append(Spacer(0, 0.2*inch))
+    elements.append(title_p2)
+    elements.append(Spacer(0, 0.5*inch))
+    elements.append(period_p)
+    elements.append(Spacer(0, 0.2*inch))
 
     doc.build(elements)
 

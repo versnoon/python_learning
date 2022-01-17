@@ -22,10 +22,10 @@ if __name__ == '__main__':
     # run.audit()
 
     # ----  导出拨款单
-    # run.salary_pdf()
+    run.salary_pdf()
 
     # ---- 导出sap格式数据
-    run.sap_info_export()
+    # run.sap_info_export()
     # endtime = datetime.datetime.now()
     # print(endtime - starttime)
     print('done')
