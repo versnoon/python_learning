@@ -532,6 +532,7 @@ def get_export_path(period,  paths=[]):
 def export_all_errs(period, errs):
     file_dir = get_export_path(period, [utils.err_folder_name, '汇总数据'])
     file_name = f"{period}_效验结果.xlsx"
+    utils.make_folder_if_nessage(file_dir)
     writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
     for name, df in errs.items():
         df.to_excel(writer, name)
@@ -545,6 +546,7 @@ def export_errs_by_depart_type(period, errs, departs, depart_type=utils.depart_d
 
         depart_err = split_by_depart_type(errs, depart, depart_type)
         if len(depart_err) > 0:
+            utils.make_folder_if_nessage(file_dir)
             writer = pd.ExcelWriter(utils.file_path(file_dir, file_name))
             for name, df in depart_err.items():
                 df.to_excel(writer, name)

@@ -257,16 +257,18 @@ class SalaryPay:
 
 def create_pdf_new(period, departs, df):
     for tex_depart in departs.tax_departs():
-        salary_pay = to_salary_pay(period, tex_depart, df)
-        to_tax_depart_new(period, file_name(
-            period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
+        if not df[df[utils.tax_column_name] == tex_depart].empty:
+            salary_pay = to_salary_pay(period, tex_depart, df)
+            to_tax_depart_new(period, file_name(
+                period, tex_depart), tex_depart, salary_pay.sealname, salary_pay)
         for depart in departs.depart_dispaly_names():
-            t = departs.is_in_tax_depart(tex_depart, depart)
-            if t:
-                salary_pay = to_salary_pay_depart(
-                    period, tex_depart, df, depart)
-                to_tax_depart_new(period, file_name(
-                    period, depart), depart, salary_pay.sealname, salary_pay, False)
+            if not df[(df[utils.tax_column_name] == tex_depart) & (df[utils.depart_display_column_name] == depart)].empty:
+                t = departs.is_in_tax_depart(tex_depart, depart)
+                if t:
+                    salary_pay = to_salary_pay_depart(
+                        period, tex_depart, df, depart)
+                    to_tax_depart_new(period, file_name(
+                        period, depart), depart, salary_pay.sealname, salary_pay, False)
 
 
 def to_salary_pay(period, tex_depart, df):
@@ -274,7 +276,7 @@ def to_salary_pay(period, tex_depart, df):
     salary_pay.period = period
     salary_pay.sealname = seal_name(tex_depart)
     salary_pay.depart = tex_depart
-    if df[utils.tax_column_name].str.contains(tex_depart).any():
+    if not df[df[utils.tax_column_name] == tex_depart].empty:
         tg = df.groupby([utils.tax_column_name]).sum()
         salary_pay._total_sf = tg.loc[tex_depart, '实发合计']
         if '工资信息-养老保险个人额度' in df.columns:
@@ -293,21 +295,28 @@ def to_salary_pay(period, tex_depart, df):
         if '银行卡信息-金融机构_工资卡' in df.columns:
             tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_工资卡']).sum()
             if '工资信息-实发' in df.columns:
-                salary_pay._total_bank_gh_sf = tg.loc[(
-                    tex_depart, '中国工商银行'), '工资信息-实发']
-                salary_pay._total_bank_zh_sf = tg.loc[(
-                    tex_depart, '中国银行'), '工资信息-实发']
-                salary_pay._total_bank_jh_sf = tg.loc[(
-                    tex_depart, '中国建设银行'), '工资信息-实发']
+
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国工商银行').any():
+                    salary_pay._total_bank_gh_sf = tg.loc[(
+                        tex_depart, '中国工商银行'), '工资信息-实发']
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国银行').any():
+                    salary_pay._total_bank_zh_sf = tg.loc[(
+                        tex_depart, '中国银行'), '工资信息-实发']
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国建设银行').any():
+                    salary_pay._total_bank_jh_sf = tg.loc[(
+                        tex_depart, '中国建设银行'), '工资信息-实发']
         if '银行卡信息-金融机构_奖金卡' in df.columns:
             tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_奖金卡']).sum()
             if '奖金信息-实发' in df.columns:
-                salary_pay._total_bank_gh_sf += tg.loc[(
-                    tex_depart, '中国工商银行'), '奖金信息-实发']
-                salary_pay._total_bank_zh_sf += tg.loc[(
-                    tex_depart, '中国银行'), '奖金信息-实发']
-                salary_pay._total_bank_jh_sf += tg.loc[(
-                    tex_depart, '中国建设银行'), '奖金信息-实发']
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国工商银行').any():
+                    salary_pay._total_bank_gh_sf += tg.loc[(
+                        tex_depart, '中国工商银行'), '奖金信息-实发']
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国银行').any():
+                    salary_pay._total_bank_zh_sf += tg.loc[(
+                        tex_depart, '中国银行'), '奖金信息-实发']
+                if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国建设银行').any():
+                    salary_pay._total_bank_jh_sf += tg.loc[(
+                        tex_depart, '中国建设银行'), '奖金信息-实发']
         if '公积金信息-公积金方案' in df.columns:
             tg = df.groupby([utils.tax_column_name, '公积金信息-公积金方案']).sum()
             if '马鞍山钢铁股份有限公司（总部）' == tex_depart:
@@ -329,12 +338,6 @@ def to_salary_pay_depart(period, tex_depart, df, depart):
     if df[utils.depart_display_column_name].str.contains(depart).any():
         tg = df.groupby(
             [utils.tax_column_name, utils.depart_display_column_name]).sum()
-        tgx = df.groupby(
-            [utils.tax_column_name, utils.depart_display_column_name, utils.depart_column_name, '银行卡信息-金融机构_工资卡']).sum()
-
-        tgx = df.groupby(
-            [utils.tax_column_name, utils.depart_display_column_name, utils.depart_column_name, '银行卡信息-金融机构_奖金卡']).sum()
-
         salary_pay._total_sf = tg.loc[(tex_depart, depart), '实发合计']
         if '工资信息-养老保险个人额度' in df.columns:
             salary_pay._yangl_gr = tg.loc[(

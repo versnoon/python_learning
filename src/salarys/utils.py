@@ -86,7 +86,6 @@ def file_path(path, filename) -> str:
 def clear_folder_by_paths(path):
     if os.path.exists(path):
         shutil.rmtree(path)
-    make_folder_if_nessage(path)
 
 
 def make_folder_if_nessage(path) -> str:

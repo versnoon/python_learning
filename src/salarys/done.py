@@ -94,7 +94,9 @@ def sap_info_export():
         gzs=gzs, jjs=jjs, banks=banks, persons=persons, tax=tax, taxOne=taxOne, gjjs=gjjs, departs=departs)
     sap_df = s_infos.to_sap_frame(df)
     period = p.get_period_info()
+    sap_df.to_excel(f'{period}-sh003_all.xls')
     clear_export_path(period, utils.sap_folder_name)
+
     b_infos.export_by_depart_type(
         sap_df, period, departs.tax_departs(), filename='sap_sh003', depart_type=utils.tax_column_name, export_folder_name=utils.sap_folder_name)
     b_infos.export_by_depart_type(
