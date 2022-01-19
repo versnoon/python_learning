@@ -964,6 +964,8 @@ def to_sap_frame(df):
         df, get_column_name(SalaryJjs.name, "科技奖励"))
     sap_df["外派人员履职待遇"] = get_df_values(
         df, get_column_name(SalaryJjs.name, "外派人员履职待遇"))
+    sap_df["年终特别绩效奖"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "年终特别绩效奖"))
     sap_df[utils.tax_column_name] = get_df_values(df, utils.tax_column_name)
     sap_df[utils.depart_display_column_name] = get_df_values(
         df, utils.depart_display_column_name)
