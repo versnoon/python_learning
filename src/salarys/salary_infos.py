@@ -923,15 +923,15 @@ def to_sap_frame(df):
     sap_df["银行2"] = get_df_values(
         df, get_column_name(SalaryBanks.name, "金融机构", "奖金卡"))
     sap_df["子女教育"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "累计子女教育支出"))
+        df, get_column_name(SalaryGzs.name, "子女教育专项附加扣除"))
     sap_df["继续教育"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "累计继续教育支出"))
+        df, get_column_name(SalaryGzs.name, "继续教育专项附加扣除"))
     sap_df["住房贷款利息"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "累计住房贷款利息支出"))
+        df, get_column_name(SalaryGzs.name, "普通住房贷款利息专项附加扣除"))
     sap_df["住房租金"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "累计住房租金支出"))
+        df, get_column_name(SalaryGzs.name, "住房租金专项附加扣除"))
     sap_df["赡养老人"] = get_df_values(
-        df, get_column_name(SalaryGzs.name, "累计赡养老人支出"))
+        df, get_column_name(SalaryGzs.name, "赡养老人专项附加扣除"))
     sap_df["马钢工龄"] = pd.NA
     sap_df["工龄"] = get_df_values(
         df, get_column_name(SalaryPersons.name, "参加工作时间"))
