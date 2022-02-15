@@ -58,7 +58,7 @@ def format_tax_data(x):
         gjj = x['住房公积金']
         if not pd.isna(gjj):
             if gjj > (utils.max_gjj):
-                total = total + (gjj - utils.max_gjj)
+                # total = total + (gjj - utils.max_gjj)
                 gjj = utils.max_gjj
             else:
                 gjj = abs(gjj)
@@ -456,3 +456,5 @@ class BwSalaryPersons(SalaryBaseInfo):
         super().__init__(period)
         self.name = '人员信息导出结果'
         super().get_infos()
+        self.df.drop_duplicates(
+            subset=[utils.code_info_column_name, utils.tax_column_name], inplace=True)

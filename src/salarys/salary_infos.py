@@ -300,6 +300,8 @@ class SalaryGjj(SalaryBaseInfo):
         self.file_sub_dir = [utils.insurance_dir]
         self.name = '公积金信息'
         super().get_infos()
+        self.df.drop_duplicates(
+            subset=[utils.code_info_column_name, utils.tax_column_name], inplace=True)
 
 
 def split_depart_infos(departs, no=0):
@@ -645,7 +647,7 @@ def append_yingf_shif_shui(df):
     # df[utils.shouru_column_name] = df[utils.yingfa_column_name]
     if get_column_name(SalaryJjs.name, '年底兑现奖') in df.columns:
         df[utils.shouru_column_name] = df[utils.shouru_column_name].sub(
-            df[get_column_name(SalaryJjs.name, '年底兑现奖')], fill_value=0)
+            df[get_column_name(SalaryJjs.name, '应扣缴税额_全年一次性奖金')], fill_value=0)
 
     if get_column_name(SalaryGzs.name, utils.depart_info_column_name) in df.columns and get_column_name(SalaryJjs.name, utils.depart_info_column_name) in df.columns:
         df.loc[df[get_column_name(SalaryGzs.name, utils.depart_info_column_name)].isnull(), get_column_name(SalaryGzs.name, utils.depart_info_column_name)
@@ -849,7 +851,7 @@ def to_sap_frame(df):
     sap_df["失业保险补缴"] = pd.NA
     sap_df["年金"] = get_df_values(
         df, get_column_name(SalaryGzs.name, "企业年金个人基础缴费"))
-    sap_df["工资税收"] = get_df_values(df, get_column_name(SalaryGzs.name, "所得税"))
+    sap_df["工资税收"] = get_df_values(df, utils.suodeshui_column_name)
     sap_df["水利基金"] = get_df_values(
         df, get_column_name(SalaryGzs.name, "其他代扣款"))
     sap_df["财务扣款"] = get_df_values(df, get_column_name(SalaryGzs.name, "其他扣款"))
@@ -897,7 +899,8 @@ def to_sap_frame(df):
     sap_df["年底兑现奖"] = get_df_values(
         df, get_column_name(SalaryJjs.name, "年底兑现奖"))
     sap_df["年终奖实发"] = pd.NA
-    sap_df["年终奖所得税"] = pd.NA
+    sap_df["年终奖所得税"] = get_df_values(
+        df, get_column_name(SalaryJjs.name, "应扣缴税额_全年一次性奖金"))
     sap_df["计税奖金"] = get_df_values(
         df, get_column_name(SalaryJjs.name, "计税奖金"))
     sap_df["预支年薪"] = get_df_values(

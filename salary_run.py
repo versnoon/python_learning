@@ -16,7 +16,7 @@ import src.salarys.done as run
 if __name__ == '__main__':
     # starttime = datetime.datetime.now()
     # ----  人员信息对比
-    # run.compare_person()
+    run.compare_person()
 
     # ----  数据效验
     # run.audit()

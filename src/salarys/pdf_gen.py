@@ -295,7 +295,6 @@ def to_salary_pay(period, tex_depart, df):
         if '银行卡信息-金融机构_工资卡' in df.columns:
             tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_工资卡']).sum()
             if '工资信息-实发' in df.columns:
-
                 if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国工商银行').any():
                     salary_pay._total_bank_gh_sf = tg.loc[(
                         tex_depart, '中国工商银行'), '工资信息-实发']
@@ -305,8 +304,10 @@ def to_salary_pay(period, tex_depart, df):
                 if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国建设银行').any():
                     salary_pay._total_bank_jh_sf = tg.loc[(
                         tex_depart, '中国建设银行'), '工资信息-实发']
+            # tg.to_excel(f'tg{tex_depart}-工资.xlsx')
         if '银行卡信息-金融机构_奖金卡' in df.columns:
             tg = df.groupby([utils.tax_column_name, '银行卡信息-金融机构_奖金卡']).sum()
+            # tg.to_excel(f'tg{tex_depart}-奖金.xlsx')
             if '奖金信息-实发' in df.columns:
                 if tg.index.get_level_values(0).str.startswith(tex_depart).any() and tg.index.get_level_values(1).str.startswith('中国工商银行').any():
                     salary_pay._total_bank_gh_sf += tg.loc[(
